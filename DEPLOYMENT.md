@@ -35,84 +35,69 @@ Oleh karena itu, backend **tidak bisa** di-deploy di Vercel atau Netlify yang si
 
 ---
 
-## 3. Strategi Deployment (Split Deployment)
+### 3. Strategi Deployment (Direct-to-Supabase Serverless/Hybrid)
 
-Kita akan membagi deployment menjadi 3 bagian:
-1. **Database**: PostgreSQL di Cloud (neon.tech / Supabase / Railway).
-2. **Backend**: Express Server + Ingestor di Cloud (Render / Railway / Fly.io).
-3. **Frontend**: Dashboard Statis di Cloud (Vercel / Netlify).
+Untuk menghindari kendala kartu kredit pada platform server Node.js 24/7 (seperti Render atau Railway), aplikasi ini diprogram menggunakan arsitektur **Direct-to-Supabase (Serverless/Hybrid)** yang **100% gratis, aman, dan tanpa kartu kredit**:
 
-### Langkah A: Deploy Database PostgreSQL
-Anda memerlukan PostgreSQL cloud gratis. Salah satu opsi termudah dan tercepat adalah **Neon** (neon.tech) atau **Supabase**:
-1. Daftar di [Neon.tech](https://neon.tech/) atau [Supabase](https://supabase.com/).
-2. Buat project baru dan pilih database PostgreSQL.
-3. Salin **Connection String** yang diberikan (biasanya berformat `postgresql://user:password@host:port/dbname`).
-4. Catat detail kredensial tersebut untuk dikonfigurasi di environment variables backend.
-
-### Langkah B: Deploy Backend (Node.js & Ingestor)
-Anda bisa menggunakan **Render** atau **Railway**:
-
-#### Menggunakan Render (render.com):
-1. Masuk ke dashboard Render dan buat **New Web Service**.
-2. Hubungkan akun GitHub Anda dan pilih repositori `web3-analytics-dashboard`.
-3. Gunakan konfigurasi berikut:
-   * **Root Directory**: `backend` (atau kosongkan dan atur Build/Start command dengan path). Lebih mudah jika Root Directory diatur ke `backend`.
-   * **Runtime**: `Node`
-   * **Build Command**: `npm install`
-   * **Start Command**: `node src/server.js`
-4. Tambahkan **Environment Variables** di tab *Environment*:
-   * `PORT`: `3001` (atau Render otomatis akan mendeteksi port)
-   * `DB_USER`: `<User database cloud Anda>`
-   * `DB_PASSWORD`: `<Password database cloud Anda>`
-   * `DB_HOST`: `<Host database cloud Anda>`
-   * `DB_PORT`: `5432`
-   * `DB_NAME`: `<Nama database cloud Anda>`
-   * `TRACKED_TOKEN_ADDRESS`: `<Alamat token ERC-20 yang ingin dipantau di Sepolia>`
-   * `SEPOLIA_RPC_URL`: `https://ethereum-sepolia-rpc.publicnode.com` (atau endpoint RPC milik Anda sendiri dari Alchemy/Infura agar lebih stabil)
-5. Klik **Deploy Web Service** dan tunggu hingga aktif. Salin URL backend Anda (misalnya `https://web3-analytics-backend.onrender.com`).
+1. **Database**: PostgreSQL di Cloud (Supabase) - 100% Gratis.
+2. **Frontend**: Dashboard di Cloud (Netlify) - 100% Gratis.
+3. **Ingestor & Traffic Generator**: Berjalan secara lokal di laptop Anda saat menyala. Data tersinkronisasi permanen di cloud (Supabase) sehingga dashboard Anda di Netlify ter-update secara *real-time*.
 
 ---
 
-### Langkah C: Menghubungkan Frontend ke Backend Produksi
-Sebelum men-deploy frontend ke Vercel/Netlify, Anda perlu memastikan frontend menembak URL backend produksi yang baru saja dibuat di Render/Railway.
-
-Buka file [dashboard/app.js](file:///c:/dev/web3-analytics-dashboard/dashboard/app.js) dan perhatikan baris ke-11:
-```javascript
-const API_BASE = window.location.protocol.startsWith('http') ? '' : 'http://localhost:3001';
-```
-
-Ubah baris tersebut agar mengarah ke backend produksi Anda saat di-deploy:
-```javascript
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3001'
-  : 'https://web3-analytics-backend.onrender.com'; // Ganti dengan URL Backend Render/Railway Anda
-```
-
-Setelah mengubahnya, lakukan commit dan push perubahan tersebut ke GitHub:
-```bash
-git add dashboard/app.js
-git commit -m "chore: update API_BASE to production backend URL"
-git push origin main
-```
+### Langkah A: Deploy Database Supabase
+Database PostgreSQL Supabase Anda sudah terhubung.
+1. Daftar di [Supabase](https://supabase.com/).
+2. Buat proyek baru dan pilih database PostgreSQL.
+3. Gunakan kredensial database Anda (Host, Port, Database Name, User, Password) untuk mengisi file `.env` lokal Anda.
+4. **Penting**: Backend lokal akan otomatis membuatkan tabel-tabel (`token_transfers`, `user_activities`, `_meta`) secara otomatis saat dijalankan untuk pertama kali. Anda tidak perlu mengimpor SQL secara manual!
 
 ---
 
-### Langkah D: Deploy Frontend (Vercel / Netlify)
+### Langkah B: Konfigurasi Frontend (Supabase Anon Key)
+Sebelum men-deploy frontend ke Netlify, pastikan dashboard terhubung ke Supabase menggunakan **Public Anon Key** Anda.
 
-#### Menggunakan Vercel:
-1. Masuk ke dashboard [Vercel](https://vercel.com/) dan buat project baru (**Add New Project**).
-2. Impor repositori GitHub `web3-analytics-dashboard` Anda.
-3. Pada halaman konfigurasi project:
-   * **Framework Preset**: Pilih `Other` atau `Vite` (jika menggunakan build tool, namun untuk project vanilla HTML ini pilih `Other`).
-   * **Root Directory**: Ubah atau edit dan arahkan ke folder `dashboard` (karena file `index.html` berada di dalam folder `/dashboard`).
-4. Klik **Deploy**.
-5. Selesai! Vercel akan menyajikan frontend Anda dengan HTTPS yang aman dan performa sangat cepat.
+1. Buka Supabase Dashboard -> **Project Settings (Ikon Gerigi)** -> **API**.
+2. Salin key berlabel **`anon` `public`**.
+3. Buka file [dashboard/app.js](file:///c:/dev/web3-analytics-dashboard/dashboard/app.js) dan isi nilai konfigurasi di bagian atas:
+   ```javascript
+   const SUPABASE_URL = 'https://gqlgcunzwpzanfkgjlkp.supabase.co';
+   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+   ```
+4. Simpan, lakukan commit, dan push perubahan tersebut ke GitHub:
+   ```bash
+   git add dashboard/app.js
+   git commit -m "feat: configure direct-to-supabase connection for production"
+   git push origin main
+   ```
 
-#### Menggunakan Netlify:
-1. Masuk ke dashboard [Netlify](https://www.netlify.com/) dan pilih **Import from Git**.
-2. Pilih repositori GitHub `web3-analytics-dashboard`.
-3. Pada tab konfigurasi build:
+---
+
+### Langkah C: Deploy Frontend ke Netlify
+Netlify 100% gratis dan tidak meminta kartu kredit untuk hosting web statis.
+
+1. Masuk ke dashboard [Netlify](https://www.netlify.com/) dan login menggunakan **GitHub**.
+2. Klik tombol **"Add new site"** -> pilih **"Import an existing project"**.
+3. Pilih repositori GitHub Anda: `web3-analytics-dashboard`.
+4. Konfigurasikan build setting:
    * **Base Directory**: `dashboard`
-   * **Build Command**: Kosongkan (karena menggunakan vanilla HTML/JS/CSS statis).
-   * **Publish Directory**: `.` (merujuk ke root dari Base Directory, yaitu folder `dashboard`).
-4. Klik **Deploy site**.
+   * **Build Command**: *(kosongkan / biarkan kosong)*
+   * **Publish Directory**: `.` (merujuk ke folder dashboard)
+5. Klik **"Deploy site"** dan tunggu beberapa detik. Web Anda akan aktif dengan HTTPS yang aman dan performa loading instan!
+
+---
+
+### Langkah D: Sinkronisasi Data & Demo Live (Ingestor Lokal)
+Untuk memantau transaksi Sepolia dan menyuplai data ke dashboard Netlify:
+
+1. Pastikan file `.env` di root proyek Anda sudah berisi kredensial Supabase Anda.
+2. Buka terminal di laptop Anda, masuk ke folder backend, dan jalankan:
+   ```bash
+   cd backend
+   npm start
+   ```
+3. Backend lokal Anda akan:
+   * Menghubungkan ke blockchain Sepolia Testnet.
+   * Menyalakan **Background Traffic Generator** untuk menyimulasikan transaksi transfer token `ANLT` acak ke alamat Ethereum acak secara otomatis setiap 15 menit (selama saldo > 0.05 Sepolia ETH).
+   * **Ingestor** akan memantau transaksi baru tersebut dan menyimpannya langsung ke database Supabase Cloud.
+4. Kapan pun ada pengunjung membuka URL Netlify Anda, mereka akan langsung melihat statistik dan grafik transaksi terbaru yang telah disinkronkan tersebut secara instan!
