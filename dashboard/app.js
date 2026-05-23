@@ -420,7 +420,7 @@ function renderWhalesTable() {
         <td class="mono font-600 align-center" style="color: ${index < 3 ? 'var(--accent)' : 'var(--muted)'}">#${index + 1}</td>
         <td>
           <span class="address-pill" onclick="openWalletDrawer('${h.address}')" title="Click to inspect Wallet">
-            ${truncate(h.address, 6, 4)}
+            ${truncate(h.address, 5, 4)}
           </span>
         </td>
         <td class="align-right mono font-600 text-title">${parseFloat(formatTokenValue(h.balance)).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -1496,6 +1496,18 @@ async function refreshAll() {
   }
 }
 
+// ── Sidebar Toggle Binding ──────────────────────────────────────────────────
+
+function bindSidebarToggle() {
+  const btn = document.getElementById('toggleSidebarBtn');
+  const sidebar = document.getElementById('sidebar');
+  if (!btn || !sidebar) return;
+
+  btn.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
+}
+
 // ── Timeframe Bindings ──────────────────────────────────────────────────────
 
 function bindTimeframeSelector() {
@@ -1545,6 +1557,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind global timeframe selector buttons
   bindTimeframeSelector();
+
+  // Bind collapsible sidebar toggle button
+  bindSidebarToggle();
 
   // Initialize and load datasets
   refreshAll();

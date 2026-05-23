@@ -16,10 +16,15 @@
 <body>
   <div class="app-layout">
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="brand">
+        <div class="brand" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
           <span class="brand-name">web3analytics</span>
+          <button class="btn btn-secondary btn-icon-only" id="toggleSidebarBtn" style="width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; border-radius: 2px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
         </div>
         <div class="sync-status">
           <div class="sync-status-indicator">
@@ -398,7 +403,7 @@
                 <button class="btn btn-secondary btn-sm" onclick="exportData('whales', 'csv')">Export CSV</button>
               </div>
               <div class="table-responsive">
-                <table>
+                <table class="whale-table">
                   <thead>
                     <tr>
                       <th>Rank</th>
