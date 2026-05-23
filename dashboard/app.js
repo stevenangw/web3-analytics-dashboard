@@ -196,7 +196,7 @@ function calculateRFM(activities) {
     }
     
     // Clean and accumulate amount (NUMERIC safe)
-    let valStr = (a.amount || '0').split('.')[0]; // Integer portion for BigInt
+    let valStr = (a.amount || '0').toString().split('.')[0]; // Integer portion for BigInt
     try {
       groups[wallet].monetary += BigInt(valStr);
     } catch {
