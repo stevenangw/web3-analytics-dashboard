@@ -623,7 +623,7 @@ function renderRFMView(filteredData = null) {
   countLabel.textContent = `${formatNumber(data.length)} profiles listed`;
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state-cell">No matching classified profiles.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state-cell">No matching classified profiles.</td></tr>';
     renderRFMStatSummaries();
     renderRFMCohortChart();
     return;
@@ -633,7 +633,7 @@ function renderRFMView(filteredData = null) {
     <tr>
       <td>
         <span class="address-pill" onclick="openWalletDrawer('${w.wallet_address}')" title="Inspect profile">
-          ${w.wallet_address}
+          ${truncate(w.wallet_address, 6, 4)}
         </span>
       </td>
       <td>
@@ -643,9 +643,6 @@ function renderRFMView(filteredData = null) {
       <td class="align-right mono text-title">${formatNumber(w.frequency)}</td>
       <td class="align-right mono text-title font-600">${parseFloat(formatTokenValue(w.monetary)).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
       <td class="align-right mono font-600 text-title" style="color: var(--accent-cyan)">${w.rfm_score}</td>
-      <td class="align-center">
-        <button class="inspect-btn" onclick="openWalletDrawer('${w.wallet_address}')">Inspect</button>
-      </td>
     </tr>
   `).join('');
 

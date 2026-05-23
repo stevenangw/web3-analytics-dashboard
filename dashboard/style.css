@@ -331,10 +331,10 @@ body {
   margin-top: 12px;
 }
 
-/* RFM detail layout — wider left column */
+/* RFM detail layout — equal column widths */
 .rfm-detail-layout {
   margin-top: 24px;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 /* ── Main Container ──────────────────────────────────────────────────────── */
