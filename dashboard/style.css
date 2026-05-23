@@ -1152,3 +1152,9 @@ tr:hover td {
     transition: none !important;
   }
 }
+
+.timeframe-btn.active {
+  background-color: var(--accent) !important;
+  color: var(--bg) !important;
+  border-color: var(--accent) !important;
+}

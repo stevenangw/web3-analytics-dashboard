@@ -27,15 +27,18 @@ let cachedGroupedActivities = [];
 // ── State ──────────────────────────────────────────────────────────────────
 let state = {
   activeTab: 'overview',
+  timeframe: '1m',
   transfers: { page: 1, data: [] },
   activities: { page: 1, data: [] },
   rfm: { data: [], segments: {} },
+  holders: [],
   stats: null,
   health: null,
   charts: {
     volume: null,
     activity: null,
-    cohort: null
+    cohort: null,
+    gas: null
   },
   activeWallet: null,
   searchQuery: ''
@@ -319,6 +322,112 @@ function groupActivities(activities) {
   });
 
   return Array.from(map.values());
+}
+
+/**
+ * Helper to get the relative "now" timestamp from the latest block to support offline simulation correctly.
+ */
+function getNow() {
+  if (cachedTransfers.length === 0) return new Date();
+  return new Date(Math.max(...cachedTransfers.map(t => new Date(t.block_timestamp))));
+}
+
+/**
+ * Filter transfers based on the selected global timeframe.
+ */
+function getFilteredTransfers() {
+  if (cachedTransfers.length === 0) return [];
+  const now = getNow();
+  const tf = state.timeframe || '1m';
+
+  let msLimit = 30 * 24 * 60 * 60 * 1000; // default 30 days
+  if (tf === '1h') msLimit = 1 * 60 * 60 * 1000;
+  else if (tf === '4h') msLimit = 4 * 60 * 60 * 1000;
+  else if (tf === '1d') msLimit = 24 * 60 * 60 * 1000;
+  else if (tf === '1w') msLimit = 7 * 24 * 60 * 60 * 1000;
+
+  return cachedTransfers.filter(t => (now - new Date(t.block_timestamp)) <= msLimit);
+}
+
+/**
+ * Helper to group timestamps dynamically based on the active timeframe.
+ */
+function getGroupKey(dateObj, tf) {
+  if (tf === '1h' || tf === '4h') {
+    const hours = dateObj.getHours().toString().padStart(2, '0');
+    const minutes = (Math.floor(dateObj.getMinutes() / 5) * 5).toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } else if (tf === '1d') {
+    const hours = dateObj.getHours().toString().padStart(2, '0');
+    return `${hours}:00`;
+  } else {
+    return dateObj.toISOString().split('T')[0];
+  }
+}
+
+/**
+ * Compute real-time token balances from the transfer ledger for all wallets.
+ */
+function calculateHolders() {
+  const balances = {};
+  
+  cachedTransfers.forEach(t => {
+    const from = t.from_address;
+    const to = t.to_address;
+    const val = BigInt(t.value || '0');
+
+    if (from !== '0x0000000000000000000000000000000000000000') {
+      balances[from] = (balances[from] || BigInt(0)) - val;
+    }
+    balances[to] = (balances[to] || BigInt(0)) + val;
+  });
+
+  // Convert to array and filter out empty/dust wallets
+  const holders = Object.keys(balances).map(addr => ({
+    address: addr,
+    balance: balances[addr]
+  }))
+  .filter(h => h.balance > BigInt(0))
+  .sort((a, b) => (b.balance > a.balance ? 1 : -1));
+
+  state.holders = holders;
+  return holders;
+}
+
+/**
+ * Render Top Holders / Whale Concentration Table
+ */
+function renderWhalesTable() {
+  const tbody = document.getElementById('whalesTableBody');
+  const countLabel = document.getElementById('whaleHoldersCountText');
+  const holders = state.holders || [];
+
+  if (!tbody) return;
+  countLabel.textContent = `${formatNumber(holders.length)} wallets`;
+
+  if (holders.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state-cell">No active whale profiles.</td></tr>';
+    return;
+  }
+
+  // Calculate total supply to show share percentage
+  const totalSupply = holders.reduce((acc, h) => acc + h.balance, BigInt(0));
+
+  tbody.innerHTML = holders.slice(0, 15).map((h, index) => {
+    const share = totalSupply > BigInt(0) ? (Number(h.balance * BigInt(10000) / totalSupply) / 100) : 0;
+    return `
+      <tr>
+        <td class="mono font-600 align-center" style="color: ${index < 3 ? 'var(--accent)' : 'var(--muted)'}">#${index + 1}</td>
+        <td>
+          <span class="address-pill" onclick="openWalletDrawer('${h.address}')" title="Click to inspect Wallet">
+            ${truncate(h.address, 6, 4)}
+          </span>
+        </td>
+        <td class="align-right mono font-600 text-title">${parseFloat(formatTokenValue(h.balance)).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+        <td class="align-right mono text-title" style="color: var(--accent); font-weight: 500;">${share.toFixed(2)}%</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 // ── Direct Supabase Mock Status Fetchers ────────────────────────────────────
@@ -663,20 +772,24 @@ function closeWalletDrawer() {
 
 // ── Chart.js Builders ──────────────────────────────────────────────────────
 
-function renderVolumeChart(transfers) {
-  // Aggregate transfers by date
+function renderVolumeChart() {
+  const transfers = getFilteredTransfers();
+  const tf = state.timeframe;
+
+  // Aggregate transfers dynamically
   const dailyVolume = {};
   const dailyCount = {};
 
   transfers.forEach(t => {
-    const date = new Date(t.block_timestamp).toISOString().split('T')[0];
-    if (!dailyVolume[date]) {
-      dailyVolume[date] = 0;
-      dailyCount[date] = 0;
+    const dateObj = new Date(t.block_timestamp);
+    const key = getGroupKey(dateObj, tf);
+    if (!dailyVolume[key]) {
+      dailyVolume[key] = 0;
+      dailyCount[key] = 0;
     }
     const val = parseFloat(t.value) / 1e18;
-    dailyVolume[date] += val;
-    dailyCount[date] += 1;
+    dailyVolume[key] += val;
+    dailyCount[key] += 1;
   });
 
   const labels = Object.keys(dailyVolume).sort();
@@ -691,19 +804,18 @@ function renderVolumeChart(transfers) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
-  // Multi-gradient glowing borders
-  const gradFill1 = ctx.createLinearGradient(0, 0, 0, 260);
-  gradFill1.addColorStop(0, 'rgba(6, 182, 212, 0.2)');
-  gradFill1.addColorStop(1, 'rgba(6, 182, 212, 0.00)');
-
-  const gradFill2 = ctx.createLinearGradient(0, 0, 0, 260);
-  gradFill2.addColorStop(0, 'rgba(139, 92, 246, 0.12)');
-  gradFill2.addColorStop(1, 'rgba(139, 92, 246, 0.00)');
+  // Format labels nicely on the X axis
+  const formattedLabels = labels.map(label => {
+    if (tf === '1h' || tf === '4h' || tf === '1d') {
+      return label; // already formatted as HH:MM or HH:00
+    }
+    return new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
 
   state.charts.volume = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+      labels: formattedLabels,
       datasets: [
         {
           label: 'Volume',
@@ -922,23 +1034,27 @@ function renderRFMCohortChart() {
 /**
  * Render Gas Cost Analytics Chart and update KPI metrics
  */
-function renderGasChart(transfers) {
+function renderGasChart() {
+  const transfers = getFilteredTransfers();
+  const tf = state.timeframe;
+
   const dailyGasUsed = {};
   const dailyGasPrice = {};
   const dailyCount = {};
 
   transfers.forEach(t => {
-    const date = new Date(t.block_timestamp).toISOString().split('T')[0];
-    if (!dailyGasUsed[date]) {
-      dailyGasUsed[date] = 0;
-      dailyGasPrice[date] = 0;
-      dailyCount[date] = 0;
+    const dateObj = new Date(t.block_timestamp);
+    const key = getGroupKey(dateObj, tf);
+    if (!dailyGasUsed[key]) {
+      dailyGasUsed[key] = 0;
+      dailyGasPrice[key] = 0;
+      dailyCount[key] = 0;
     }
     const gasUsed = parseInt(t.gas_used || '0');
     const gasPrice = parseFloat(t.gas_price || '0') / 1e9; // Convert to Gwei
-    dailyGasUsed[date] += gasUsed;
-    dailyGasPrice[date] += gasPrice;
-    dailyCount[date] += 1;
+    dailyGasUsed[key] += gasUsed;
+    dailyGasPrice[key] += gasPrice;
+    dailyCount[key] += 1;
   });
 
   const labels = Object.keys(dailyGasUsed).sort();
@@ -953,10 +1069,17 @@ function renderGasChart(transfers) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  const formattedLabels = labels.map(label => {
+    if (tf === '1h' || tf === '4h' || tf === '1d') {
+      return label; // already formatted
+    }
+    return new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  });
+
   state.charts.gas = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+      labels: formattedLabels,
       datasets: [
         {
           label: 'Gas Used',
@@ -1033,7 +1156,7 @@ function renderGasChart(transfers) {
     }
   });
 
-  // Calculate totals for KPI fields
+  // Calculate totals for KPI fields using active timeframe transfers
   let totalGas = 0;
   let totalPriceSum = 0;
   let txCount = 0;
@@ -1064,6 +1187,13 @@ function exportData(type, format) {
   } else if (type === 'rfm') {
     dataToExport = state.rfm.data;
     filename = 'rfm_profiles';
+  } else if (type === 'whales') {
+    dataToExport = state.holders.map((h, i) => ({
+      rank: i + 1,
+      address: h.address,
+      balance: h.balance.toString()
+    }));
+    filename = 'top_token_holders';
   }
 
   if (dataToExport.length === 0) {
@@ -1341,16 +1471,20 @@ async function refreshAll() {
   state.activities.data = cachedGroupedActivities.slice(activitiesOffset, activitiesOffset + PAGE_SIZE);
   renderActivitiesTable();
 
-  // 6. Compute RFM and render
+  // 6. Compute RFM, Whales, and render
   const rfmResult = calculateRFM(cachedActivities);
   state.rfm.data = rfmResult.wallets;
   state.rfm.segments = rfmResult.segments;
   renderRFMView();
 
+  // Compute and render Whale Concentration
+  calculateHolders();
+  renderWhalesTable();
+
   // 7. Render charts
   if (cachedTransfers.length > 0) {
-    renderVolumeChart(cachedTransfers.slice(0, 150));
-    renderGasChart(cachedTransfers.slice(0, 150));
+    renderVolumeChart();
+    renderGasChart();
   }
   if (cachedActivities.length > 0) {
     renderActivityChart(cachedActivities.slice(0, 150));
@@ -1360,6 +1494,32 @@ async function refreshAll() {
     btn.disabled = false;
     btn.style.opacity = '1';
   }
+}
+
+// ── Timeframe Bindings ──────────────────────────────────────────────────────
+
+function bindTimeframeSelector() {
+  const container = document.getElementById('timeframeSelector');
+  if (!container) return;
+
+  const buttons = container.querySelectorAll('.timeframe-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Toggle active classes
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update state and refresh charts
+      const tf = btn.getAttribute('data-timeframe');
+      state.timeframe = tf;
+
+      // Re-render Volume and Gas charts immediately based on timeframe
+      if (cachedTransfers.length > 0) {
+        renderVolumeChart();
+        renderGasChart();
+      }
+    });
+  });
 }
 
 // ── Initialization ─────────────────────────────────────────────────────────
@@ -1372,6 +1532,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind table/global search actions
   bindTableSearchFilters();
+
+  // Bind global timeframe selector buttons
+  bindTimeframeSelector();
 
   // Initialize and load datasets
   refreshAll();

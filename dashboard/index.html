@@ -84,6 +84,13 @@
           <h1 class="view-title" id="currentViewTitle">Overview</h1>
         </div>
         <div class="nav-right">
+          <div class="btn-group" id="timeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg); margin-right: 4px;">
+            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
+            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
+            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
+            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
+            <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
+          </div>
           <div class="search-box">
             <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -340,37 +347,66 @@
             </div>
           </div>
 
-          <div class="card-blur">
-            <div class="table-toolbar">
-              <div class="toolbar-left">
-                <h3>Wallet profiles</h3>
-                <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'csv')">CSV</button>
-                <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'json')">JSON</button>
-                <div class="table-search-wrapper">
-                  <input type="text" placeholder="Filter..." id="rfmTableSearch" class="input-field">
+          <div class="charts-layout" style="margin-top: 24px; grid-template-columns: 3fr 2fr;">
+            <!-- Left: Wallet profiles -->
+            <div class="card-blur">
+              <div class="table-toolbar">
+                <div class="toolbar-left">
+                  <h3>Wallet Profiles (RFM)</h3>
+                  <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'csv')">CSV</button>
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'json')">JSON</button>
+                  <div class="table-search-wrapper">
+                    <input type="text" placeholder="Filter..." id="rfmTableSearch" class="input-field">
+                  </div>
                 </div>
               </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Address</th>
+                      <th>Segment</th>
+                      <th class="align-right">Recency</th>
+                      <th class="align-right">Frequency</th>
+                      <th class="align-right">Monetary</th>
+                      <th class="align-right">RFM</th>
+                      <th class="align-center">--</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rfmTableBody">
+                    <tr><td colspan="7" class="empty-state-cell">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Address</th>
-                    <th>Segment</th>
-                    <th class="align-right">Recency</th>
-                    <th class="align-right">Frequency</th>
-                    <th class="align-right">Monetary</th>
-                    <th class="align-right">RFM</th>
-                    <th class="align-center">--</th>
-                  </tr>
-                </thead>
-                <tbody id="rfmTableBody">
-                  <tr><td colspan="7" class="empty-state-cell">Loading...</td></tr>
-                </tbody>
-              </table>
+
+            <!-- Right: Top Holders (Whales) -->
+            <div class="card-blur">
+              <div class="table-toolbar">
+                <div class="toolbar-left">
+                  <h3>Top Holders (Whales)</h3>
+                  <span class="toolbar-info" id="whaleHoldersCountText">0 whales</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('whales', 'csv')">Export CSV</button>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rank</th>
+                      <th>Address</th>
+                      <th class="align-right">Balance</th>
+                      <th class="align-right">Share (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="whalesTableBody">
+                    <tr><td colspan="4" class="empty-state-cell">Processing blockchain ledger...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
