@@ -18,9 +18,9 @@
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="brand" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <div class="brand">
           <span class="brand-name">web3analytics</span>
-          <button class="btn btn-secondary btn-icon-only" id="toggleSidebarBtn" style="width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; border-radius: 2px;">
+          <button class="btn btn-icon-only sidebar-toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
@@ -43,20 +43,20 @@
             <rect x="14" y="12" width="7" height="9" rx="1"/>
             <rect x="3" y="16" width="7" height="5" rx="1"/>
           </svg>
-          Overview
+          <span>Overview</span>
         </button>
         <button class="menu-item" data-tab="transfers">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
             <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
           </svg>
-          Transfers
+          <span>Transfers</span>
         </button>
         <button class="menu-item" data-tab="activities">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
-          Activity
+          <span>Activity</span>
         </button>
         <button class="menu-item" data-tab="rfm">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -64,7 +64,7 @@
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             <path d="M2 12h20"/>
           </svg>
-          RFM
+          <span>RFM</span>
         </button>
       </nav>
 
@@ -155,7 +155,7 @@
                   <h3>Volume</h3>
                   <p class="chart-subtitle">Daily transfer count and token volume</p>
                 </div>
-                <div class="btn-group" id="volumeTimeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg);">
+                <div class="btn-group" id="volumeTimeframeSelector">
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
@@ -180,14 +180,14 @@
             </div>
           </div>
 
-          <div class="charts-layout" style="margin-top: 24px;">
+          <div class="charts-layout">
             <div class="chart-box">
               <div class="chart-box-header">
                 <div class="chart-title-group">
                   <h3>Gas Cost Analytics</h3>
                   <p class="chart-subtitle">Average gas price (Gwei) and cumulative gas used</p>
                 </div>
-                <div class="btn-group" id="gasTimeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg);">
+                <div class="btn-group" id="gasTimeframeSelector">
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
                   <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
@@ -203,17 +203,17 @@
               <div class="chart-box-header">
                 <h3>Gas Summary</h3>
               </div>
-              <div class="segment-stat-list" style="margin-top: 12px;">
+              <div class="segment-stat-list gas-stat-list">
                 <div class="segment-stat-item">
                   <div class="segment-stat-meta">
                     <span class="segment-stat-title">Avg Gas Price</span>
-                    <span class="segment-stat-val mono font-600" id="avgGasPriceVal" style="color: var(--accent);">-- Gwei</span>
+                    <span class="segment-stat-val mono font-600" id="avgGasPriceVal">-- Gwei</span>
                   </div>
                 </div>
                 <div class="segment-stat-item">
                   <div class="segment-stat-meta">
                     <span class="segment-stat-title">Total Gas Used</span>
-                    <span class="segment-stat-val mono font-600" id="totalGasUsedVal" style="color: var(--warning);">--</span>
+                    <span class="segment-stat-val mono font-600" id="totalGasUsedVal">--</span>
                   </div>
                 </div>
               </div>
@@ -242,10 +242,10 @@
                 <h3>Transfers</h3>
                 <span class="toolbar-info" id="transfersCountText">0 rows</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="toolbar-actions">
                 <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'csv')">CSV</button>
                 <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'json')">JSON</button>
-                <input type="number" placeholder="Min Token..." id="transfersMinValFilter" class="input-field" style="width: 110px; font-family: var(--font-mono); font-size: 11px; background-color: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; outline: none;">
+                <input type="number" placeholder="Min Token..." id="transfersMinValFilter" class="input-field input-field-narrow">
                 <div class="table-search-wrapper">
                   <input type="text" placeholder="Filter..." id="transfersLocalSearch" class="input-field">
                 </div>
@@ -284,10 +284,10 @@
                 <h3>Wallet activity</h3>
                 <span class="toolbar-info" id="activitiesCountText">0 rows</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="toolbar-actions">
                 <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'csv')">CSV</button>
                 <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'json')">JSON</button>
-                <input type="number" placeholder="Min Token..." id="activitiesMinAmtFilter" class="input-field" style="width: 110px; font-family: var(--font-mono); font-size: 11px; background-color: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; outline: none;">
+                <input type="number" placeholder="Min Token..." id="activitiesMinAmtFilter" class="input-field input-field-narrow">
                 <div class="table-search-wrapper">
                   <input type="text" placeholder="Filter..." id="activitiesLocalSearch" class="input-field">
                 </div>
@@ -357,7 +357,7 @@
             </div>
           </div>
 
-          <div class="charts-layout" style="margin-top: 24px; grid-template-columns: 3fr 2fr;">
+          <div class="charts-layout rfm-detail-layout">
             <!-- Left: Wallet profiles -->
             <div class="card-blur">
               <div class="table-toolbar">
@@ -365,7 +365,7 @@
                   <h3>Wallet Profiles (RFM)</h3>
                   <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="toolbar-actions">
                   <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'csv')">CSV</button>
                   <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'json')">JSON</button>
                   <div class="table-search-wrapper">
@@ -400,13 +400,15 @@
                   <h3>Top Holders (Whales)</h3>
                   <span class="toolbar-info" id="whaleHoldersCountText">0 whales</span>
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="exportData('whales', 'csv')">Export CSV</button>
+                <div class="toolbar-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('whales', 'csv')">Export CSV</button>
+                </div>
               </div>
               <div class="table-responsive">
                 <table class="whale-table">
                   <thead>
                     <tr>
-                      <th>Rank</th>
+                      <th class="align-center">Rank</th>
                       <th>Address</th>
                       <th class="align-right">Balance</th>
                       <th class="align-right">Share (%)</th>

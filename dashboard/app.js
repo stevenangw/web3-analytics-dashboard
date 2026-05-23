@@ -112,14 +112,22 @@ function formatTime(isoString) {
  */
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
-    const toast = document.getElementById('copyToast');
-    if (toast) {
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
-    }
+    showToast('Copied to clipboard');
   }).catch(err => {
     console.error('[Clipboard] Failed to copy:', err);
   });
+}
+
+/**
+ * Show a toast notification with a message.
+ */
+function showToast(message) {
+  const toast = document.getElementById('copyToast');
+  if (toast) {
+    toast.querySelector('span').textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
 }
 
 /**
@@ -147,7 +155,6 @@ async function triggerManualIngestion() {
   btn.querySelector('span').textContent = 'Syncing...';
 
   try {
-    // Attempt local ingest trigger if on localhost, otherwise notify that ingest runs on the local node
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
     if (isLocal) {
@@ -155,17 +162,17 @@ async function triggerManualIngestion() {
       const data = await res.json();
       console.log('[Ingestor] Manual ingestion complete:', data);
     } else {
-      alert("In production, the Ingestor runs automatically from your local terminal whenever 'npm start' is active.");
+      showToast('Ingestor runs locally — start it via npm start');
     }
     
     await refreshAll();
   } catch (err) {
     console.error('[Ingestor] Ingestion trigger failed:', err);
-    alert("Could not connect to the local ingestor node. Make sure it is running on your machine!");
+    showToast('Could not connect to local ingestor node');
   } finally {
     btn.disabled = false;
     btn.classList.remove('syncing');
-    btn.querySelector('span').textContent = 'Trigger Ingest';
+    btn.querySelector('span').textContent = 'Ingest';
   }
 }
 
@@ -455,7 +462,7 @@ function renderKPIs() {
   document.getElementById('latestBlock').textContent = s.latestBlock ? `#${formatNumber(s.latestBlock)}` : '—';
   document.getElementById('latestBlockValue').textContent = s.latestBlock ? `#${formatNumber(s.latestBlock)}` : '#—';
 
-  document.querySelectorAll('.kpi-value').forEach(el => el.classList.remove('loading'));
+  document.querySelectorAll('.kpi-value').forEach(el => el.classList.remove('skeleton'));
 }
 
 function renderStatus() {
@@ -955,7 +962,7 @@ function renderActivityChart(activities) {
           borderColor: 'rgba(255, 255, 255, 0.08)',
           borderWidth: 1,
           padding: 10,
-          cornerRadius: 6
+          cornerRadius: 0
         }
       }
     }
@@ -1197,7 +1204,7 @@ function exportData(type, format) {
   }
 
   if (dataToExport.length === 0) {
-    alert('No data available to export.');
+    showToast('No data available to export');
     return;
   }
 
@@ -1428,8 +1435,10 @@ async function refreshAll() {
   const btn = document.getElementById('refreshBtn');
   if (btn) {
     btn.disabled = true;
-    btn.style.opacity = '0.6';
   }
+
+  // Show skeleton loading state on KPI values
+  document.querySelectorAll('.kpi-value').forEach(el => el.classList.add('skeleton'));
 
   // 1. Fetch raw datasets directly from Supabase Cloud
   cachedTransfers = await supabaseFetch('token_transfers', '?select=*&order=block_number.desc,id.desc&limit=1000');
@@ -1492,7 +1501,7 @@ async function refreshAll() {
 
   if (btn) {
     btn.disabled = false;
-    btn.style.opacity = '1';
+    btn.style.opacity = '';
   }
 }
 
