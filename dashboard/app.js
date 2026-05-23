@@ -508,6 +508,8 @@ function renderRFMView(filteredData = null) {
 
   if (!data || data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty-state-cell">No matching classified profiles.</td></tr>';
+    renderRFMStatSummaries();
+    renderRFMCohortChart();
     return;
   }
 
@@ -541,7 +543,7 @@ function renderRFMView(filteredData = null) {
 function renderRFMStatSummaries() {
   const container = document.getElementById('segmentStatsSummaryList');
   if (!state.rfm.data || state.rfm.data.length === 0) {
-    container.innerHTML = '<div class="segment-stat-placeholder">Awaiting database sync...</div>';
+    container.innerHTML = '<div class="segment-stat-placeholder">No active cohorts detected.</div>';
     return;
   }
 
