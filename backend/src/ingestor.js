@@ -174,8 +174,18 @@ async function startIngestor() {
       lastBlock = Math.max(0, currentBlock - 1000);
       console.log(`[Ingestor] 🆕 No checkpoint found. Starting backfill from block ${lastBlock}`);
     } else {
-      console.log(`[Ingestor] 🔄 Resuming backfill from block ${lastBlock + 1}`);
-      lastBlock += 1; // don't re-process the last completed block
+      // Safety Clamp: prevent massive historical queries (e.g. when switching from localhost to Sepolia)
+      if (currentBlock - lastBlock > 5000) {
+        const clampedBlock = Math.max(0, currentBlock - 1000);
+        console.log(
+          `[Ingestor] ⚠️  Large gap detected (${currentBlock - lastBlock} blocks) likely due to network change. ` +
+          `Clamping backfill to start from block ${clampedBlock} to protect RPC node from rate-limiting.`
+        );
+        lastBlock = clampedBlock;
+      } else {
+        console.log(`[Ingestor] 🔄 Resuming backfill from block ${lastBlock + 1}`);
+        lastBlock += 1; // don't re-process the last completed block
+      }
     }
 
     const chunks = generateChunks(lastBlock, currentBlock);

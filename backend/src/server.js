@@ -36,6 +36,7 @@ const {
 } = require('./db');
 
 const { startIngestor } = require('./ingestor');
+const { startTrafficGenerator } = require('./trafficGenerator');
 
 // ── Express app ────────────────────────────────────────────────────────────
 const app  = express();
@@ -312,6 +313,8 @@ app.get('/api/rfm', async (_req, res) => {
     // 3. Bind the HTTP server
     app.listen(PORT, () => {
       console.log(`[Server] 🚀 Web3 Analytics backend listening on http://localhost:${PORT}`);
+      // Start the background traffic generator to simulate activity on Sepolia
+      startTrafficGenerator();
     });
   } catch (err) {
     console.error('[Server] ✖ Fatal startup error:', err);
