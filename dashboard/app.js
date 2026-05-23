@@ -829,19 +829,7 @@ function renderVolumeChart() {
           fill: false,
           tension: 0.2,
           pointRadius: 2,
-          pointHoverRadius: 4,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Transfers',
-          data: countData,
-          borderColor: '#fafafa', // Monochrome White
-          borderWidth: 1.5,
-          fill: false,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          yAxisID: 'y1'
+          pointHoverRadius: 4
         }
       ]
     },
@@ -883,13 +871,6 @@ function renderVolumeChart() {
           grid: { color: '#27272a' },
           ticks: {
             callback: val => val.toLocaleString()
-          }
-        },
-        y1: {
-          position: 'right',
-          grid: { display: false },
-          ticks: {
-            callback: val => val.toFixed(0)
           }
         }
       }
@@ -1086,26 +1067,14 @@ function renderGasChart() {
       labels: formattedLabels,
       datasets: [
         {
-          label: 'Gas Used',
-          data: gasUsedData,
-          borderColor: '#f59e0b',
-          borderWidth: 1.5,
-          fill: false,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          yAxisID: 'y'
-        },
-        {
           label: 'Avg Gas Price (Gwei)',
           data: avgGasPriceData,
-          borderColor: '#fafafa',
+          borderColor: '#f59e0b', // Amber/Gas color
           borderWidth: 1.5,
           fill: false,
           tension: 0.2,
           pointRadius: 2,
-          pointHoverRadius: 4,
-          yAxisID: 'y1'
+          pointHoverRadius: 4
         }
       ]
     },
@@ -1145,13 +1114,6 @@ function renderGasChart() {
         y: {
           position: 'left',
           grid: { color: '#27272a' },
-          ticks: {
-            callback: val => val.toLocaleString()
-          }
-        },
-        y1: {
-          position: 'right',
-          grid: { display: false },
           ticks: {
             callback: val => val.toFixed(1) + ' Gwei'
           }
