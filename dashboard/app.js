@@ -27,7 +27,8 @@ let cachedGroupedActivities = [];
 // ── State ──────────────────────────────────────────────────────────────────
 let state = {
   activeTab: 'overview',
-  timeframe: '1m',
+  volumeTimeframe: '1m',
+  gasTimeframe: '1m',
   transfers: { page: 1, data: [] },
   activities: { page: 1, data: [] },
   rfm: { data: [], segments: {} },
@@ -333,12 +334,11 @@ function getNow() {
 }
 
 /**
- * Filter transfers based on the selected global timeframe.
+ * Filter transfers based on the selected timeframe.
  */
-function getFilteredTransfers() {
+function getFilteredTransfers(tf = '1m') {
   if (cachedTransfers.length === 0) return [];
   const now = getNow();
-  const tf = state.timeframe || '1m';
 
   let msLimit = 30 * 24 * 60 * 60 * 1000; // default 30 days
   if (tf === '1h') msLimit = 1 * 60 * 60 * 1000;
@@ -773,8 +773,8 @@ function closeWalletDrawer() {
 // ── Chart.js Builders ──────────────────────────────────────────────────────
 
 function renderVolumeChart() {
-  const transfers = getFilteredTransfers();
-  const tf = state.timeframe;
+  const tf = state.volumeTimeframe || '1m';
+  const transfers = getFilteredTransfers(tf);
 
   // Aggregate transfers dynamically
   const dailyVolume = {};
@@ -1035,8 +1035,8 @@ function renderRFMCohortChart() {
  * Render Gas Cost Analytics Chart and update KPI metrics
  */
 function renderGasChart() {
-  const transfers = getFilteredTransfers();
-  const tf = state.timeframe;
+  const tf = state.gasTimeframe || '1m';
+  const transfers = getFilteredTransfers(tf);
 
   const dailyGasUsed = {};
   const dailyGasPrice = {};
@@ -1499,27 +1499,37 @@ async function refreshAll() {
 // ── Timeframe Bindings ──────────────────────────────────────────────────────
 
 function bindTimeframeSelector() {
-  const container = document.getElementById('timeframeSelector');
-  if (!container) return;
-
-  const buttons = container.querySelectorAll('.timeframe-btn');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      // Toggle active classes
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      // Update state and refresh charts
-      const tf = btn.getAttribute('data-timeframe');
-      state.timeframe = tf;
-
-      // Re-render Volume and Gas charts immediately based on timeframe
-      if (cachedTransfers.length > 0) {
-        renderVolumeChart();
-        renderGasChart();
-      }
+  // Bind Volume Timeframe Selector
+  const volumeContainer = document.getElementById('volumeTimeframeSelector');
+  if (volumeContainer) {
+    const buttons = volumeContainer.querySelectorAll('.timeframe-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.volumeTimeframe = btn.getAttribute('data-timeframe');
+        if (cachedTransfers.length > 0) {
+          renderVolumeChart();
+        }
+      });
     });
-  });
+  }
+
+  // Bind Gas Timeframe Selector
+  const gasContainer = document.getElementById('gasTimeframeSelector');
+  if (gasContainer) {
+    const buttons = gasContainer.querySelectorAll('.timeframe-btn');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.gasTimeframe = btn.getAttribute('data-timeframe');
+        if (cachedTransfers.length > 0) {
+          renderGasChart();
+        }
+      });
+    });
+  }
 }
 
 // ── Initialization ─────────────────────────────────────────────────────────

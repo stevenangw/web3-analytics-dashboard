@@ -84,13 +84,6 @@
           <h1 class="view-title" id="currentViewTitle">Overview</h1>
         </div>
         <div class="nav-right">
-          <div class="btn-group" id="timeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg); margin-right: 4px;">
-            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
-            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
-            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
-            <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
-            <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
-          </div>
           <div class="search-box">
             <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -157,7 +150,13 @@
                   <h3>Volume</h3>
                   <p class="chart-subtitle">Daily transfer count and token volume</p>
                 </div>
-                <span class="chart-badge">14d</span>
+                <div class="btn-group" id="volumeTimeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg);">
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
+                </div>
               </div>
               <div class="chart-container">
                 <canvas id="volumeChart"></canvas>
@@ -183,7 +182,13 @@
                   <h3>Gas Cost Analytics</h3>
                   <p class="chart-subtitle">Average gas price (Gwei) and cumulative gas used</p>
                 </div>
-                <span class="chart-badge">Live</span>
+                <div class="btn-group" id="gasTimeframeSelector" style="display: flex; gap: 2px; border: 1px solid var(--border); padding: 2px; background: var(--bg);">
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
+                </div>
               </div>
               <div class="chart-container">
                 <canvas id="gasChart"></canvas>
