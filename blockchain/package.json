@@ -1,0 +1,19 @@
+{
+  "name": "web3-analytics-blockchain",
+  "version": "1.0.0",
+  "description": "Hardhat blockchain layer for Web3 Analytics Dashboard",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "node": "npx hardhat node",
+    "deploy:local": "npx hardhat run scripts/deploy.js --network localhost",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.js --network sepolia",
+    "seed": "npx hardhat run scripts/seed.js --network localhost"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.4.0"
+  }
+}

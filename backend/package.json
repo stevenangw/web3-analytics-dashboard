@@ -1,0 +1,17 @@
+{
+  "name": "web3-analytics-backend",
+  "version": "1.0.0",
+  "description": "Event ingestor backend for Web3 Analytics Dashboard",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "ethers": "^6.13.0",
+    "pg": "^8.13.0",
+    "dotenv": "^16.4.0",
+    "cors": "^2.8.5"
+  }
+}
