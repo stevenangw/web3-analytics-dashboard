@@ -169,6 +169,40 @@
             </div>
           </div>
 
+          <div class="charts-layout" style="margin-top: 24px;">
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <div class="chart-title-group">
+                  <h3>Gas Cost Analytics</h3>
+                  <p class="chart-subtitle">Average gas price (Gwei) and cumulative gas used</p>
+                </div>
+                <span class="chart-badge">Live</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="gasChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-box stats-summary-box">
+              <div class="chart-box-header">
+                <h3>Gas Summary</h3>
+              </div>
+              <div class="segment-stat-list" style="margin-top: 12px;">
+                <div class="segment-stat-item">
+                  <div class="segment-stat-meta">
+                    <span class="segment-stat-title">Avg Gas Price</span>
+                    <span class="segment-stat-val mono font-600" id="avgGasPriceVal" style="color: var(--accent);">-- Gwei</span>
+                  </div>
+                </div>
+                <div class="segment-stat-item">
+                  <div class="segment-stat-meta">
+                    <span class="segment-stat-title">Total Gas Used</span>
+                    <span class="segment-stat-val mono font-600" id="totalGasUsedVal" style="color: var(--warning);">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="sync-feed-box">
             <div class="sync-feed-header">
               <div class="feed-title">
@@ -191,8 +225,13 @@
                 <h3>Transfers</h3>
                 <span class="toolbar-info" id="transfersCountText">0 rows</span>
               </div>
-              <div class="table-search-wrapper">
-                <input type="text" placeholder="Filter..." id="transfersLocalSearch" class="input-field">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'csv')">CSV</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'json')">JSON</button>
+                <input type="number" placeholder="Min Token..." id="transfersMinValFilter" class="input-field" style="width: 110px; font-family: var(--font-mono); font-size: 11px; background-color: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; outline: none;">
+                <div class="table-search-wrapper">
+                  <input type="text" placeholder="Filter..." id="transfersLocalSearch" class="input-field">
+                </div>
               </div>
             </div>
             <div class="table-responsive">
@@ -228,15 +267,20 @@
                 <h3>Wallet activity</h3>
                 <span class="toolbar-info" id="activitiesCountText">0 rows</span>
               </div>
-              <div class="table-search-wrapper">
-                <input type="text" placeholder="Filter..." id="activitiesLocalSearch" class="input-field">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'csv')">CSV</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'json')">JSON</button>
+                <input type="number" placeholder="Min Token..." id="activitiesMinAmtFilter" class="input-field" style="width: 110px; font-family: var(--font-mono); font-size: 11px; background-color: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; outline: none;">
+                <div class="table-search-wrapper">
+                  <input type="text" placeholder="Filter..." id="activitiesLocalSearch" class="input-field">
+                </div>
               </div>
             </div>
             <div class="table-responsive">
               <table>
                 <thead>
                   <tr>
-                    <th>Wallet</th>
+                    <th>Transaction Flow</th>
                     <th>Type</th>
                     <th class="align-right">Amount</th>
                     <th>Block</th>
@@ -302,8 +346,12 @@
                 <h3>Wallet profiles</h3>
                 <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
               </div>
-              <div class="table-search-wrapper">
-                <input type="text" placeholder="Filter..." id="rfmTableSearch" class="input-field">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'csv')">CSV</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'json')">JSON</button>
+                <div class="table-search-wrapper">
+                  <input type="text" placeholder="Filter..." id="rfmTableSearch" class="input-field">
+                </div>
               </div>
             </div>
             <div class="table-responsive">

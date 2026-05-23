@@ -22,6 +22,7 @@ const AUTO_REFRESH_MS = 30000; // 30 seconds
 // Cached full datasets for ultra-fast offline pagination and analysis
 let cachedTransfers = [];
 let cachedActivities = [];
+let cachedGroupedActivities = [];
 
 // ── State ──────────────────────────────────────────────────────────────────
 let state = {
@@ -289,6 +290,37 @@ function calculateRFM(activities) {
   };
 }
 
+/**
+ * Helper to group raw activities by transaction hash to combine sender and receiver.
+ */
+function groupActivities(activities) {
+  if (!activities || activities.length === 0) return [];
+  const map = new Map();
+
+  activities.forEach(a => {
+    const tx = a.transaction_hash;
+    if (!map.has(tx)) {
+      const txDetails = cachedTransfers.find(t => t.transaction_hash === tx);
+      map.set(tx, {
+        transaction_hash: tx,
+        block_number: a.block_number,
+        block_timestamp: a.block_timestamp,
+        amount: a.amount,
+        sender: txDetails ? txDetails.from_address : null,
+        receiver: txDetails ? txDetails.to_address : null
+      });
+    }
+    const entry = map.get(tx);
+    if (a.activity_type === 'TRANSFER') {
+      entry.sender = a.wallet_address;
+    } else if (a.activity_type === 'RECEIVE') {
+      entry.receiver = a.wallet_address;
+    }
+  });
+
+  return Array.from(map.values());
+}
+
 // ── Direct Supabase Mock Status Fetchers ────────────────────────────────────
 
 async function fetchHealth() {
@@ -408,12 +440,18 @@ function renderActivitiesTable(filteredData = null) {
   tbody.innerHTML = data.map(a => `
     <tr>
       <td>
-        <span class="address-pill" onclick="openWalletDrawer('${a.wallet_address}')" title="Click to inspect Wallet">
-          ${truncate(a.wallet_address)}
-        </span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="address-pill" onclick="openWalletDrawer('${a.sender || '—'}')" title="Click to inspect Sender Wallet">
+            ${truncate(a.sender)}
+          </span>
+          <span style="color: var(--muted); font-size: 11px;">➔</span>
+          <span class="address-pill" onclick="openWalletDrawer('${a.receiver || '—'}')" title="Click to inspect Receiver Wallet">
+            ${truncate(a.receiver)}
+          </span>
+        </div>
       </td>
       <td>
-        <span class="badge-action-type ${a.activity_type.toLowerCase()}">${a.activity_type}</span>
+        <span class="badge-action-type transfer">TRANSFER</span>
       </td>
       <td class="align-right mono font-600 text-title">${formatTokenValue(a.amount)}</td>
       <td class="mono">${formatNumber(a.block_number)}</td>
@@ -879,6 +917,194 @@ function renderRFMCohortChart() {
   });
 }
 
+/**
+ * Render Gas Cost Analytics Chart and update KPI metrics
+ */
+function renderGasChart(transfers) {
+  const dailyGasUsed = {};
+  const dailyGasPrice = {};
+  const dailyCount = {};
+
+  transfers.forEach(t => {
+    const date = new Date(t.block_timestamp).toISOString().split('T')[0];
+    if (!dailyGasUsed[date]) {
+      dailyGasUsed[date] = 0;
+      dailyGasPrice[date] = 0;
+      dailyCount[date] = 0;
+    }
+    const gasUsed = parseInt(t.gas_used || '0');
+    const gasPrice = parseFloat(t.gas_price || '0') / 1e9; // Convert to Gwei
+    dailyGasUsed[date] += gasUsed;
+    dailyGasPrice[date] += gasPrice;
+    dailyCount[date] += 1;
+  });
+
+  const labels = Object.keys(dailyGasUsed).sort();
+  const gasUsedData = labels.map(d => dailyGasUsed[d]);
+  const avgGasPriceData = labels.map(d => dailyCount[d] > 0 ? (dailyGasPrice[d] / dailyCount[d]) : 0);
+
+  if (state.charts.gas) {
+    state.charts.gas.destroy();
+  }
+
+  const canvas = document.getElementById('gasChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  state.charts.gas = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+      datasets: [
+        {
+          label: 'Gas Used',
+          data: gasUsedData,
+          borderColor: '#f59e0b',
+          borderWidth: 1.5,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Avg Gas Price (Gwei)',
+          data: avgGasPriceData,
+          borderColor: '#fafafa',
+          borderWidth: 1.5,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            usePointStyle: true,
+            boxWidth: 5,
+            padding: 15
+          }
+        },
+        tooltip: {
+          backgroundColor: '#131316',
+          borderColor: '#27272a',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 0,
+          titleFont: { weight: '600', family: "'IBM Plex Sans', sans-serif" },
+          bodyFont: { family: "'JetBrains Mono', monospace" }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#27272a' },
+          ticks: { maxTicksLimit: 10 }
+        },
+        y: {
+          position: 'left',
+          grid: { color: '#27272a' },
+          ticks: {
+            callback: val => val.toLocaleString()
+          }
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          ticks: {
+            callback: val => val.toFixed(1) + ' Gwei'
+          }
+        }
+      }
+    }
+  });
+
+  // Calculate totals for KPI fields
+  let totalGas = 0;
+  let totalPriceSum = 0;
+  let txCount = 0;
+  transfers.forEach(t => {
+    totalGas += parseInt(t.gas_used || '0');
+    totalPriceSum += parseFloat(t.gas_price || '0');
+    if (t.gas_price) txCount++;
+  });
+  const avgGasPriceGwei = txCount > 0 ? (totalPriceSum / txCount / 1e9) : 0;
+
+  document.getElementById('avgGasPriceVal').textContent = `${avgGasPriceGwei.toFixed(2)} Gwei`;
+  document.getElementById('totalGasUsedVal').textContent = totalGas.toLocaleString();
+}
+
+/**
+ * Universal Data Export to CSV/JSON format
+ */
+function exportData(type, format) {
+  let dataToExport = [];
+  let filename = '';
+
+  if (type === 'transfers') {
+    dataToExport = cachedTransfers;
+    filename = 'transfers_ledger';
+  } else if (type === 'activities') {
+    dataToExport = cachedGroupedActivities;
+    filename = 'wallet_activities';
+  } else if (type === 'rfm') {
+    dataToExport = state.rfm.data;
+    filename = 'rfm_profiles';
+  }
+
+  if (dataToExport.length === 0) {
+    alert('No data available to export.');
+    return;
+  }
+
+  let content = '';
+  let mimeType = '';
+
+  if (format === 'json') {
+    content = JSON.stringify(dataToExport, null, 2);
+    mimeType = 'application/json';
+    filename += '.json';
+  } else if (format === 'csv') {
+    const headers = Object.keys(dataToExport[0]);
+    const csvRows = [headers.join(',')];
+
+    dataToExport.forEach(row => {
+      const values = headers.map(header => {
+        const val = row[header];
+        const escaped = ('' + (val !== null && val !== undefined ? val : '')).replace(/"/g, '\\"');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    });
+
+    content = csvRows.join('\n');
+    mimeType = 'text/csv';
+    filename += '.csv';
+  }
+
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── Pagination and Pagination Handlers ─────────────────────────────────────
 
 function changePage(table, delta) {
@@ -894,9 +1120,9 @@ function changePage(table, delta) {
     const newPage = state.activities.page + delta;
     if (newPage < 1) return;
     const offset = (newPage - 1) * PAGE_SIZE;
-    if (offset >= cachedActivities.length) return;
+    if (offset >= cachedGroupedActivities.length) return;
     state.activities.page = newPage;
-    state.activities.data = cachedActivities.slice(offset, offset + PAGE_SIZE);
+    state.activities.data = cachedGroupedActivities.slice(offset, offset + PAGE_SIZE);
     renderActivitiesTable();
   }
 }
@@ -936,11 +1162,14 @@ function bindSidebarNavigation() {
       if (targetTab === 'overview') {
         if (cachedTransfers.length > 0) {
           renderVolumeChart(cachedTransfers.slice(0, 150));
+          renderGasChart(cachedTransfers.slice(0, 150));
           renderLiveFeed(cachedTransfers);
         }
         if (cachedActivities.length > 0) {
           renderActivityChart(cachedActivities.slice(0, 150));
         }
+      } else if (targetTab === 'rfm') {
+        renderRFMCohortChart();
       }
     });
   });
@@ -948,42 +1177,66 @@ function bindSidebarNavigation() {
 
 // ── Search filters ─────────────────────────────────────────────────────────
 
-function bindTableSearchFilters() {
-  // Transfers Local filter
-  const transfersSearch = document.getElementById('transfersLocalSearch');
-  if (transfersSearch) {
-    transfersSearch.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase();
-      if (!q) {
-        renderTransfersTable();
-        return;
-      }
-      const filtered = state.transfers.data.filter(
-        t => t.transaction_hash.toLowerCase().includes(q) || 
-             t.from_address.toLowerCase().includes(q) || 
-             t.to_address.toLowerCase().includes(q)
-      );
-      renderTransfersTable(filtered);
+function applyTransfersFilters() {
+  const q = (document.getElementById('transfersLocalSearch')?.value || '').toLowerCase();
+  const minVal = parseFloat(document.getElementById('transfersMinValFilter')?.value || '0');
+
+  let filtered = cachedTransfers;
+
+  if (q) {
+    filtered = filtered.filter(
+      t => t.transaction_hash.toLowerCase().includes(q) || 
+           t.from_address.toLowerCase().includes(q) || 
+           t.to_address.toLowerCase().includes(q)
+    );
+  }
+
+  if (minVal > 0) {
+    filtered = filtered.filter(t => {
+      const val = parseFloat(t.value) / 1e18;
+      return val >= minVal;
     });
   }
 
-  // Activities Local filter
-  const activitiesSearch = document.getElementById('activitiesLocalSearch');
-  if (activitiesSearch) {
-    activitiesSearch.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase();
-      if (!q) {
-        renderActivitiesTable();
-        return;
-      }
-      const filtered = state.activities.data.filter(
-        a => a.wallet_address.toLowerCase().includes(q) || 
-             a.activity_type.toLowerCase().includes(q) ||
-             a.transaction_hash.toLowerCase().includes(q)
-      );
-      renderActivitiesTable(filtered);
+  renderTransfersTable(filtered.slice(0, 100));
+}
+
+function applyActivitiesFilters() {
+  const q = (document.getElementById('activitiesLocalSearch')?.value || '').toLowerCase();
+  const minAmt = parseFloat(document.getElementById('activitiesMinAmtFilter')?.value || '0');
+
+  let filtered = cachedGroupedActivities;
+
+  if (q) {
+    filtered = filtered.filter(
+      a => (a.sender && a.sender.toLowerCase().includes(q)) || 
+           (a.receiver && a.receiver.toLowerCase().includes(q)) ||
+           a.transaction_hash.toLowerCase().includes(q)
+    );
+  }
+
+  if (minAmt > 0) {
+    filtered = filtered.filter(a => {
+      const val = parseFloat(a.amount) / 1e18;
+      return val >= minAmt;
     });
   }
+
+  renderActivitiesTable(filtered.slice(0, 100));
+}
+
+function bindTableSearchFilters() {
+  // Transfers Local filter & Min Val Filter
+  const transfersSearch = document.getElementById('transfersLocalSearch');
+  const transfersMinVal = document.getElementById('transfersMinValFilter');
+  if (transfersSearch) transfersSearch.addEventListener('input', applyTransfersFilters);
+  if (transfersMinVal) transfersMinVal.addEventListener('input', applyTransfersFilters);
+
+  // Activities Local filter & Min Amt Filter
+  const activitiesSearch = document.getElementById('activitiesLocalSearch');
+  const activitiesMinAmt = document.getElementById('activitiesMinAmtFilter');
+  if (activitiesSearch) activitiesSearch.addEventListener('input', applyActivitiesFilters);
+  if (activitiesMinAmt) activitiesMinAmt.addEventListener('input', applyActivitiesFilters);
 
   // RFM Database local search
   const rfmSearch = document.getElementById('rfmTableSearch');
@@ -1077,10 +1330,13 @@ async function refreshAll() {
     renderLiveFeed(cachedTransfers);
   }
 
+  // Group activities to avoid duplicate rows for the same transaction
+  cachedGroupedActivities = groupActivities(cachedActivities);
+
   // 5. Render activities page
   const activitiesPage = state.activities.page;
   const activitiesOffset = (activitiesPage - 1) * PAGE_SIZE;
-  state.activities.data = cachedActivities.slice(activitiesOffset, activitiesOffset + PAGE_SIZE);
+  state.activities.data = cachedGroupedActivities.slice(activitiesOffset, activitiesOffset + PAGE_SIZE);
   renderActivitiesTable();
 
   // 6. Compute RFM and render
@@ -1092,6 +1348,7 @@ async function refreshAll() {
   // 7. Render charts
   if (cachedTransfers.length > 0) {
     renderVolumeChart(cachedTransfers.slice(0, 150));
+    renderGasChart(cachedTransfers.slice(0, 150));
   }
   if (cachedActivities.length > 0) {
     renderActivityChart(cachedActivities.slice(0, 150));
