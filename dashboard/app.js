@@ -8,7 +8,9 @@
  */
 
 // ── Configuration ──────────────────────────────────────────────────────────
-const API_BASE = window.location.protocol.startsWith('http') ? '' : 'http://localhost:3001';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol.startsWith('file')
+  ? 'http://localhost:3001'
+  : 'https://your-backend-service.onrender.com'; // Ganti dengan URL backend Render/Railway Anda setelah di-deploy
 const PAGE_SIZE = 15;
 const AUTO_REFRESH_MS = 30000; // 30 seconds
 
