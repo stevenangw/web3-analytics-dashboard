@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Web3 Analytics — ERC-20 token transfer tracking, wallet activity, and RFM segmentation.">
+  <meta name="color-scheme" content="dark light">
+  <script>
+    {
+      const theme = localStorage.getItem("color-scheme") || "dark";
+      document.documentElement.setAttribute("data-color-scheme", theme);
+      if (theme === "light") {
+        document.documentElement.style.setProperty("color-scheme", "light");
+      } else {
+        document.documentElement.style.setProperty("color-scheme", "dark");
+      }
+    }
+  </script>
   <title>Web3 Analytics</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,8 +47,8 @@
         </div>
       </div>
 
-      <nav class="sidebar-menu">
-        <button class="menu-item active" data-tab="overview">
+      <nav class="sidebar-menu" role="tablist" aria-label="Sidebar Navigation">
+        <button class="menu-item active" role="tab" aria-selected="true" aria-controls="tab-overview" data-tab="overview">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="3" width="7" height="9" rx="1"/>
             <rect x="14" y="3" width="7" height="5" rx="1"/>
@@ -45,20 +57,20 @@
           </svg>
           <span>Overview</span>
         </button>
-        <button class="menu-item" data-tab="transfers">
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-transfers" data-tab="transfers">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
             <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
           </svg>
           <span>Transfers</span>
         </button>
-        <button class="menu-item" data-tab="activities">
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-activities" data-tab="activities">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
           </svg>
           <span>Activity</span>
         </button>
-        <button class="menu-item" data-tab="rfm">
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-rfm" data-tab="rfm">
           <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -96,6 +108,11 @@
             <input type="text" placeholder="Search wallet or tx hash..." id="globalSearchInput">
             <button class="search-clear-btn" id="searchClearBtn" style="display: none;">&times;</button>
           </div>
+          <button class="btn btn-secondary btn-icon-only" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle color theme">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+            </svg>
+          </button>
           <button class="btn btn-secondary btn-icon-only" id="refreshBtn" onclick="refreshAll()" title="Refresh">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
@@ -389,6 +406,11 @@
                     <tr><td colspan="6" class="empty-state-cell">Loading...</td></tr>
                   </tbody>
                 </table>
+              </div>
+              <div class="table-pagination">
+                <button class="btn btn-secondary btn-sm" id="prevRfm" onclick="changePage('rfm', -1)">Prev</button>
+                <span class="pagination-indicator" id="rfmPageInfo">Page 1</span>
+                <button class="btn btn-secondary btn-sm" id="nextRfm" onclick="changePage('rfm', 1)">Next</button>
               </div>
             </div>
 

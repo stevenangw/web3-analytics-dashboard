@@ -31,7 +31,7 @@ let state = {
   gasTimeframe: '1m',
   transfers: { page: 1, data: [] },
   activities: { page: 1, data: [] },
-  rfm: { data: [], segments: {} },
+  rfm: { page: 1, data: [], allData: [], segments: {} },
   holders: [],
   stats: null,
   health: null,
@@ -618,14 +618,18 @@ function renderLiveFeed(transfers) {
 function renderRFMView(filteredData = null) {
   const tbody = document.getElementById('rfmTableBody');
   const countLabel = document.getElementById('rfmTotalWalletsText');
+  const pageInfo = document.getElementById('rfmPageInfo');
+
+  const allData = state.rfm.allData || [];
   const data = filteredData || state.rfm.data;
 
-  countLabel.textContent = `${formatNumber(data.length)} profiles listed`;
+  countLabel.textContent = `${formatNumber(allData.length)} profiles listed`;
 
   if (!data || data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state-cell">No matching classified profiles.</td></tr>';
     renderRFMStatSummaries();
     renderRFMCohortChart();
+    if (pageInfo) pageInfo.textContent = `Page ${state.rfm.page}`;
     return;
   }
 
@@ -645,6 +649,10 @@ function renderRFMView(filteredData = null) {
       <td class="align-right mono font-600 text-title" style="color: var(--accent-cyan)">${w.rfm_score}</td>
     </tr>
   `).join('');
+
+  if (pageInfo) {
+    pageInfo.textContent = `Page ${state.rfm.page}`;
+  }
 
   // Render side list summaries (Overview of percentages)
   renderRFMStatSummaries();
@@ -808,6 +816,10 @@ function renderVolumeChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.22)');
+  gradient.addColorStop(1, 'rgba(45, 212, 191, 0)');
+
   // Format labels nicely on the X axis
   const formattedLabels = labels.map(label => {
     if (tf === '1h' || tf === '4h' || tf === '1d') {
@@ -825,11 +837,16 @@ function renderVolumeChart() {
           label: 'Volume',
           data: volumeData,
           borderColor: '#2dd4bf', // Accent Teal
-          borderWidth: 1.5,
-          fill: false,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: gradient,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#2dd4bf',
+          pointHoverBackgroundColor: '#2dd4bf',
+          pointHoverBorderColor: '#fafafa',
+          pointHoverBorderWidth: 2
         }
       ]
     },
@@ -1054,6 +1071,10 @@ function renderGasChart() {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  const gradientGas = ctx.createLinearGradient(0, 0, 0, 200);
+  gradientGas.addColorStop(0, 'rgba(245, 158, 11, 0.22)');
+  gradientGas.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
   const formattedLabels = labels.map(label => {
     if (tf === '1h' || tf === '4h' || tf === '1d') {
       return label; // already formatted
@@ -1070,11 +1091,16 @@ function renderGasChart() {
           label: 'Avg Gas Price (Gwei)',
           data: avgGasPriceData,
           borderColor: '#f59e0b', // Amber/Gas color
-          borderWidth: 1.5,
-          fill: false,
-          tension: 0.2,
-          pointRadius: 2,
-          pointHoverRadius: 4
+          borderWidth: 2,
+          fill: true,
+          backgroundColor: gradientGas,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: '#f59e0b',
+          pointHoverBackgroundColor: '#f59e0b',
+          pointHoverBorderColor: '#fafafa',
+          pointHoverBorderWidth: 2
         }
       ]
     },
@@ -1222,6 +1248,14 @@ function changePage(table, delta) {
     state.activities.page = newPage;
     state.activities.data = cachedGroupedActivities.slice(offset, offset + PAGE_SIZE);
     renderActivitiesTable();
+  } else if (table === 'rfm') {
+    const newPage = state.rfm.page + delta;
+    if (newPage < 1) return;
+    const offset = (newPage - 1) * PAGE_SIZE;
+    if (offset >= (state.rfm.allData || []).length) return;
+    state.rfm.page = newPage;
+    state.rfm.data = state.rfm.allData.slice(offset, offset + PAGE_SIZE);
+    renderRFMView();
   }
 }
 
@@ -1234,11 +1268,15 @@ function bindSidebarNavigation() {
   menuButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       // Deactivate current
-      menuButtons.forEach(b => b.classList.remove('active'));
+      menuButtons.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       panels.forEach(p => p.classList.remove('active'));
 
       // Activate clicked
       btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
       const targetTab = btn.getAttribute('data-tab');
       state.activeTab = targetTab;
 
@@ -1342,10 +1380,12 @@ function bindTableSearchFilters() {
     rfmSearch.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
       if (!q) {
+        state.rfm.page = 1;
+        state.rfm.data = (state.rfm.allData || []).slice(0, PAGE_SIZE);
         renderRFMView();
         return;
       }
-      const filtered = state.rfm.data.filter(
+      const filtered = (state.rfm.allData || []).filter(
         w => w.wallet_address.toLowerCase().includes(q) || 
              w.segment.toLowerCase().includes(q) ||
              w.rfm_score.toString().includes(q)
@@ -1441,8 +1481,11 @@ async function refreshAll() {
 
   // 6. Compute RFM, Whales, and render
   const rfmResult = calculateRFM(cachedActivities);
-  state.rfm.data = rfmResult.wallets;
+  state.rfm.allData = rfmResult.wallets;
   state.rfm.segments = rfmResult.segments;
+  state.rfm.page = state.rfm.page || 1;
+  const rfmOffset = (state.rfm.page - 1) * PAGE_SIZE;
+  state.rfm.data = state.rfm.allData.slice(rfmOffset, rfmOffset + PAGE_SIZE);
   renderRFMView();
 
   // Compute and render Whale Concentration
@@ -1512,6 +1555,23 @@ function bindTimeframeSelector() {
   }
 }
 
+function bindThemeToggle() {
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    const currentTheme = localStorage.getItem('color-scheme') || 'dark';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+    localStorage.setItem('color-scheme', nextTheme);
+    document.documentElement.setAttribute('data-color-scheme', nextTheme);
+    document.documentElement.style.setProperty('color-scheme', nextTheme);
+
+    console.log(`[Terminal] Theme toggled to ${nextTheme}`);
+    showToast(`Switched to ${nextTheme} mode`);
+  });
+}
+
 // ── Initialization ─────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1528,6 +1588,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind collapsible sidebar toggle button
   bindSidebarToggle();
+
+  // Bind theme toggle action
+  bindThemeToggle();
 
   // Initialize and load datasets
   refreshAll();

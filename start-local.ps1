@@ -24,12 +24,8 @@ Write-Host ""
 # ── 1. PostgreSQL via Docker ────────────────────────────────
 Write-Host "[1/5] " -NoNewline -ForegroundColor Yellow
 Write-Host "Starting PostgreSQL (Docker)..."
-try {
-    docker-compose -f "$root\docker-compose.yml" up -d 2>$null
-    Write-Host "       PostgreSQL is up!" -ForegroundColor Green
-} catch {
-    Write-Host "       Docker not available — make sure PostgreSQL is running manually." -ForegroundColor Red
-}
+docker-compose -f "$root\docker-compose.yml" up -d
+Write-Host "       PostgreSQL is up!" -ForegroundColor Green
 Start-Sleep -Seconds 3
 
 # ── 2. Hardhat Node ─────────────────────────────────────────
