@@ -6,26 +6,24 @@
   "scripts": {
     "install:all": "cd blockchain && npm install && cd ../backend && npm install",
     "install:python": "pip install -r analytics/requirements.txt",
-
     "compile": "cd blockchain && npx --no-install hardhat compile",
-
     "hardhat:node": "cd blockchain && npx --no-install hardhat node",
     "deploy:local": "cd blockchain && npx --no-install hardhat run scripts/deploy.js --network localhost",
     "seed": "cd blockchain && npx --no-install hardhat run scripts/seed.js --network localhost",
     "deploy:sepolia": "cd blockchain && npx --no-install hardhat run scripts/deploy.js --network sepolia",
-
     "backend": "cd backend && node src/server.js",
     "backend:dev": "cd backend && node --watch src/server.js",
-
     "analytics": "cd analytics && python process_data.py",
-
     "db:up": "docker-compose up -d",
     "db:down": "docker-compose down",
     "db:reset": "docker-compose down -v && docker-compose up -d",
-
     "dashboard": "start http://localhost:3001",
-
     "setup": "npm run install:all && npm run compile && echo ✅ Setup complete!",
-    "start:local": "powershell -ExecutionPolicy Bypass -File start-local.ps1"
+    "start:local": "powershell -ExecutionPolicy Bypass -File start-local.ps1",
+    "predeploy": "echo Deploying dashboard to GitHub Pages...",
+    "deploy": "npx gh-pages -d dashboard"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }

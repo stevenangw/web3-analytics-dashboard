@@ -817,8 +817,8 @@ function renderVolumeChart() {
   const ctx = canvas.getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, 'rgba(45, 212, 191, 0.22)');
-  gradient.addColorStop(1, 'rgba(45, 212, 191, 0)');
+  gradient.addColorStop(0, 'rgba(192, 132, 252, 0.25)'); // Violet Accent Glow
+  gradient.addColorStop(1, 'rgba(192, 132, 252, 0)');
 
   // Format labels nicely on the X axis
   const formattedLabels = labels.map(label => {
@@ -836,15 +836,15 @@ function renderVolumeChart() {
         {
           label: 'Volume',
           data: volumeData,
-          borderColor: '#2dd4bf', // Accent Teal
+          borderColor: '#c084fc', // Accent Violet
           borderWidth: 2,
           fill: true,
           backgroundColor: gradient,
           tension: 0.35,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#2dd4bf',
-          pointHoverBackgroundColor: '#2dd4bf',
+          pointBackgroundColor: '#c084fc',
+          pointHoverBackgroundColor: '#c084fc',
           pointHoverBorderColor: '#fafafa',
           pointHoverBorderWidth: 2
         }
@@ -869,25 +869,26 @@ function renderVolumeChart() {
           }
         },
         tooltip: {
-          backgroundColor: '#131316',
-          borderColor: '#27272a',
+          backgroundColor: 'rgba(20, 20, 25, 0.95)',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           borderWidth: 1,
-          padding: 10,
-          cornerRadius: 0,
-          titleFont: { weight: '600', family: "'IBM Plex Sans', sans-serif" },
-          bodyFont: { family: "'JetBrains Mono', monospace" }
+          padding: 12,
+          cornerRadius: 12,
+          titleFont: { weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
+          bodyFont: { family: "'Space Grotesk', monospace" }
         }
       },
       scales: {
         x: {
-          grid: { color: '#27272a' },
-          ticks: { maxTicksLimit: 10 }
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
+          ticks: { maxTicksLimit: 10, font: { family: "'Space Grotesk', monospace" } }
         },
         y: {
           position: 'left',
-          grid: { color: '#27272a' },
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
           ticks: {
-            callback: val => val.toLocaleString()
+            callback: val => val.toLocaleString(),
+            font: { family: "'Space Grotesk', monospace" }
           }
         }
       }
@@ -906,15 +907,15 @@ function renderActivityChart(activities) {
   const data = Object.values(typeCounts);
   
   const colors = labels.map(l => {
-    if (l === 'TRANSFER') return '#ef4444'; // rose
-    if (l === 'RECEIVE') return '#10b981'; // emerald
-    return '#8b5cf6';
+    if (l === 'TRANSFER') return '#f43f5e'; // Crimson Rose
+    if (l === 'RECEIVE') return '#34d399'; // Emerald
+    return '#c084fc'; // Violet
   });
 
   const borderColors = labels.map(l => {
-    if (l === 'TRANSFER') return 'rgba(239, 68, 68, 0.15)';
-    if (l === 'RECEIVE') return 'rgba(16, 185, 129, 0.15)';
-    return 'rgba(139, 92, 246, 0.15)';
+    if (l === 'TRANSFER') return 'rgba(244, 63, 94, 0.15)';
+    if (l === 'RECEIVE') return 'rgba(52, 211, 153, 0.15)';
+    return 'rgba(192, 132, 252, 0.15)';
   });
 
   if (state.charts.activity) {
@@ -972,12 +973,12 @@ function renderRFMCohortChart() {
   const data = Object.values(segments);
 
   const colors = labels.map(label => {
-    if (label === 'Champion') return '#2dd4bf';     // Teal
-    if (label === 'Loyal') return '#22c55e';        // Green
+    if (label === 'Champion') return '#22d3ee';     // Neon Cyan
+    if (label === 'Loyal') return '#c084fc';        // Violet
     if (label === 'New User') return '#f59e0b';     // Amber
     if (label === 'Potential') return '#6366f1';    // Indigo
     if (label === 'At Risk') return '#f43f5e';      // Red
-    return '#737373';                               // Gray
+    return '#94a3b8';                               // Slate
   });
 
   if (state.charts.cohort) {
@@ -1004,11 +1005,12 @@ function renderRFMCohortChart() {
       maintainAspectRatio: false,
       scales: {
         r: {
-          grid: { color: '#27272a' },
-          angleLines: { color: '#27272a' },
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          angleLines: { color: 'rgba(255, 255, 255, 0.04)' },
           ticks: {
             backdropColor: 'transparent',
-            color: '#8e8e93'
+            color: '#8e8e93',
+            font: { family: "'Space Grotesk', monospace" }
           }
         }
       },
@@ -1018,15 +1020,18 @@ function renderRFMCohortChart() {
           labels: {
             usePointStyle: true,
             boxWidth: 6,
-            padding: 10
+            padding: 10,
+            font: { family: "'Plus Jakarta Sans', sans-serif" }
           }
         },
         tooltip: {
-          backgroundColor: '#131316',
-          borderColor: '#27272a',
+          backgroundColor: 'rgba(20, 20, 25, 0.95)',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           borderWidth: 1,
-          padding: 10,
-          cornerRadius: 0
+          padding: 12,
+          cornerRadius: 12,
+          titleFont: { weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
+          bodyFont: { family: "'Space Grotesk', monospace" }
         }
       }
     }
@@ -1123,25 +1128,26 @@ function renderGasChart() {
           }
         },
         tooltip: {
-          backgroundColor: '#131316',
-          borderColor: '#27272a',
+          backgroundColor: 'rgba(20, 20, 25, 0.95)',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
           borderWidth: 1,
-          padding: 10,
-          cornerRadius: 0,
-          titleFont: { weight: '600', family: "'IBM Plex Sans', sans-serif" },
-          bodyFont: { family: "'JetBrains Mono', monospace" }
+          padding: 12,
+          cornerRadius: 12,
+          titleFont: { weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
+          bodyFont: { family: "'Space Grotesk', monospace" }
         }
       },
       scales: {
         x: {
-          grid: { color: '#27272a' },
-          ticks: { maxTicksLimit: 10 }
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
+          ticks: { maxTicksLimit: 10, font: { family: "'Space Grotesk', monospace" } }
         },
         y: {
           position: 'left',
-          grid: { color: '#27272a' },
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
           ticks: {
-            callback: val => val.toFixed(1) + ' Gwei'
+            callback: val => val.toFixed(1) + ' Gwei',
+            font: { family: "'Space Grotesk', monospace" }
           }
         }
       }
