@@ -977,7 +977,9 @@ tr:hover td {
 }
 
 .rfm-tag.potential {
-  color: var(--text);
+  background-color: rgba(99, 102, 241, 0.06);
+  border-color: #6366f1;
+  color: #6366f1;
 }
 
 .rfm-tag.at-risk {
@@ -987,7 +989,9 @@ tr:hover td {
 }
 
 .rfm-tag.hibernating {
-  color: var(--muted);
+  background-color: rgba(115, 115, 115, 0.06);
+  border-color: #737373;
+  color: #737373;
 }
 
 /* Cohort Summary Box */
@@ -1041,9 +1045,9 @@ tr:hover td {
 .progress-bar-fill.champion { background-color: var(--accent); }
 .progress-bar-fill.loyal { background-color: var(--in); }
 .progress-bar-fill.new-user { background-color: var(--warning); }
-.progress-bar-fill.potential { background-color: var(--text); }
+.progress-bar-fill.potential { background-color: #6366f1; }
 .progress-bar-fill.at-risk { background-color: var(--out); }
-.progress-bar-fill.hibernating { background-color: var(--muted); }
+.progress-bar-fill.hibernating { background-color: #737373; }
 
 .segment-stat-placeholder {
   text-align: center;

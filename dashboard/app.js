@@ -668,7 +668,7 @@ function renderRFMStatSummaries() {
     return;
   }
 
-  const total = state.rfm.data.length;
+  const total = (state.rfm.allData || []).length;
   const segments = state.rfm.segments;
 
   const segmentMetas = [
@@ -975,9 +975,9 @@ function renderRFMCohortChart() {
     if (label === 'Champion') return '#2dd4bf';     // Teal
     if (label === 'Loyal') return '#22c55e';        // Green
     if (label === 'New User') return '#f59e0b';     // Amber
-    if (label === 'Potential') return '#fafafa';    // White
+    if (label === 'Potential') return '#6366f1';    // Indigo
     if (label === 'At Risk') return '#f43f5e';      // Red
-    return '#52525b';                               // Gray
+    return '#737373';                               // Gray
   });
 
   if (state.charts.cohort) {
