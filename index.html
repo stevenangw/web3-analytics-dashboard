@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Web3 Analytics — ERC-20 token transfer tracking, wallet activity, and RFM segmentation.">
+  <meta name="color-scheme" content="dark light">
+  <script>
+    {
+      const theme = localStorage.getItem("color-scheme") || "dark";
+      document.documentElement.setAttribute("data-color-scheme", theme);
+      if (theme === "light") {
+        document.documentElement.style.setProperty("color-scheme", "light");
+      } else {
+        document.documentElement.style.setProperty("color-scheme", "dark");
+      }
+    }
+  </script>
+  <title>Web3 Analytics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="brand-name">web3analytics</span>
+          <button class="btn btn-icon-only sidebar-toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+        <div class="sync-status">
+          <div class="sync-status-indicator">
+            <span class="pulse-dot" id="sidebarPulse"></span>
+            <span id="syncStatusText">Connecting...</span>
+          </div>
+          <div class="badge" id="modeBadge">init</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu" role="tablist" aria-label="Sidebar Navigation">
+        <button class="menu-item active" role="tab" aria-selected="true" aria-controls="tab-overview" data-tab="overview">
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="7" height="9" rx="1"/>
+            <rect x="14" y="3" width="7" height="5" rx="1"/>
+            <rect x="14" y="12" width="7" height="9" rx="1"/>
+            <rect x="3" y="16" width="7" height="5" rx="1"/>
+          </svg>
+          <span>Overview</span>
+        </button>
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-transfers" data-tab="transfers">
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+            <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+          </svg>
+          <span>Transfers</span>
+        </button>
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-activities" data-tab="activities">
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <span>Activity</span>
+        </button>
+        <button class="menu-item" role="tab" aria-selected="false" aria-controls="tab-rfm" data-tab="rfm">
+          <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <path d="M2 12h20"/>
+          </svg>
+          <span>RFM</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="block-info-card">
+          <span class="block-info-label">Last block</span>
+          <span class="block-info-value" id="latestBlockValue">#--</span>
+        </div>
+        <button class="btn btn-sidebar-action" id="triggerIngestBtn" onclick="triggerManualIngestion()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span>Ingest</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main-container">
+
+      <header class="top-navbar">
+        <div class="nav-left">
+          <h1 class="view-title" id="currentViewTitle">Overview</h1>
+        </div>
+        <div class="nav-right">
+          <div class="search-box">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" placeholder="Search wallet or tx hash..." id="globalSearchInput">
+            <button class="search-clear-btn" id="searchClearBtn" style="display: none;">&times;</button>
+          </div>
+          <button class="btn btn-secondary btn-icon-only" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle color theme">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+            </svg>
+          </button>
+          <button class="btn btn-secondary btn-icon-only" id="refreshBtn" onclick="refreshAll()" title="Refresh">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <main class="content-body">
+
+        <!-- OVERVIEW -->
+        <section class="tab-panel active" id="tab-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card" id="kpiTransfers">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Transfers</span>
+              </div>
+              <div class="kpi-card-body">
+                <span class="kpi-value" id="totalTransfers">--</span>
+                <span class="kpi-trend">on-chain events</span>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiActivities">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Activities</span>
+              </div>
+              <div class="kpi-card-body">
+                <span class="kpi-value" id="totalActivities">--</span>
+                <span class="kpi-trend">derived records</span>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiWallets">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Wallets</span>
+              </div>
+              <div class="kpi-card-body">
+                <span class="kpi-value" id="uniqueWallets">--</span>
+                <span class="kpi-trend">unique addresses</span>
+              </div>
+            </div>
+            <div class="kpi-card" id="kpiBlock">
+              <div class="kpi-card-header">
+                <span class="kpi-label">Block</span>
+              </div>
+              <div class="kpi-card-body">
+                <span class="kpi-value mono" id="latestBlock">--</span>
+                <span class="kpi-trend" id="latestBlockNetwork">latest synced</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-layout">
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <div class="chart-title-group">
+                  <h3>Volume</h3>
+                  <p class="chart-subtitle">Daily token volume (ETH)</p>
+                </div>
+                <div class="btn-group" id="volumeTimeframeSelector">
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="volumeChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <div class="chart-title-group">
+                  <h3>Type ratio</h3>
+                  <p class="chart-subtitle">Transfer vs receive</p>
+                </div>
+              </div>
+              <div class="chart-container centered">
+                <canvas id="activityChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-layout">
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <div class="chart-title-group">
+                  <h3>Gas Cost Analytics</h3>
+                  <p class="chart-subtitle">Average gas price (Gwei)</p>
+                </div>
+                <div class="btn-group" id="gasTimeframeSelector">
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1h">1H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="4h">4H</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1d">1D</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn" data-timeframe="1w">1W</button>
+                  <button class="btn btn-sm btn-secondary timeframe-btn active" data-timeframe="1m">1M</button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="gasChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-box stats-summary-box">
+              <div class="chart-box-header">
+                <h3>Gas Summary</h3>
+              </div>
+              <div class="segment-stat-list gas-stat-list">
+                <div class="segment-stat-item">
+                  <div class="segment-stat-meta">
+                    <span class="segment-stat-title">Avg Gas Price</span>
+                    <span class="segment-stat-val mono font-600" id="avgGasPriceVal">-- Gwei</span>
+                  </div>
+                </div>
+                <div class="segment-stat-item">
+                  <div class="segment-stat-meta">
+                    <span class="segment-stat-title">Total Gas Used</span>
+                    <span class="segment-stat-val mono font-600" id="totalGasUsedVal">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sync-feed-box">
+            <div class="sync-feed-header">
+              <div class="feed-title">
+                <span class="live-dot"></span>
+                <h3>Recent events</h3>
+              </div>
+              <span class="feed-subtitle">Last ingested transfers</span>
+            </div>
+            <div class="feed-container" id="overviewFeedList">
+              <div class="feed-placeholder">Waiting for data...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TRANSFERS -->
+        <section class="tab-panel" id="tab-transfers">
+          <div class="card-blur">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <h3>Transfers</h3>
+                <span class="toolbar-info" id="transfersCountText">0 rows</span>
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'csv')">CSV</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('transfers', 'json')">JSON</button>
+                <input type="number" placeholder="Min Token..." id="transfersMinValFilter" class="input-field input-field-narrow">
+                <div class="table-search-wrapper">
+                  <input type="text" placeholder="Filter..." id="transfersLocalSearch" class="input-field">
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tx hash</th>
+                    <th>Block</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th class="align-right">Value</th>
+                    <th class="align-right">Time</th>
+                  </tr>
+                </thead>
+                <tbody id="transfersBody">
+                  <tr><td colspan="6" class="empty-state-cell">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-pagination">
+              <button class="btn btn-secondary btn-sm" id="prevTransfers" onclick="changePage('transfers', -1)">Prev</button>
+              <span class="pagination-indicator" id="transfersPageInfo">Page 1</span>
+              <button class="btn btn-secondary btn-sm" id="nextTransfers" onclick="changePage('transfers', 1)">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ACTIVITIES -->
+        <section class="tab-panel" id="tab-activities">
+          <div class="card-blur">
+            <div class="table-toolbar">
+              <div class="toolbar-left">
+                <h3>Wallet activity</h3>
+                <span class="toolbar-info" id="activitiesCountText">0 rows</span>
+              </div>
+              <div class="toolbar-actions">
+                <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'csv')">CSV</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportData('activities', 'json')">JSON</button>
+                <input type="number" placeholder="Min Token..." id="activitiesMinAmtFilter" class="input-field input-field-narrow">
+                <div class="table-search-wrapper">
+                  <input type="text" placeholder="Filter..." id="activitiesLocalSearch" class="input-field">
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Transaction Flow</th>
+                    <th>Type</th>
+                    <th class="align-right">Amount</th>
+                    <th>Block</th>
+                    <th>Tx hash</th>
+                    <th class="align-right">Time</th>
+                  </tr>
+                </thead>
+                <tbody id="activitiesBody">
+                  <tr><td colspan="6" class="empty-state-cell">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-pagination">
+              <button class="btn btn-secondary btn-sm" id="prevActivities" onclick="changePage('activities', -1)">Prev</button>
+              <span class="pagination-indicator" id="activitiesPageInfo">Page 1</span>
+              <button class="btn btn-secondary btn-sm" id="nextActivities" onclick="changePage('activities', 1)">Next</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- RFM -->
+        <section class="tab-panel" id="tab-rfm">
+          <div class="rfm-explainer-card">
+            <div class="explainer-content">
+              <h3>RFM segmentation</h3>
+              <p>Wallets grouped by recency, frequency, and monetary volume. Scores computed relative to the full address set.</p>
+            </div>
+            <div class="explainer-badges">
+              <span class="rfm-tag champion">Champion</span>
+              <span class="rfm-tag loyal">Loyal</span>
+              <span class="rfm-tag new-user">New User</span>
+              <span class="rfm-tag potential">Potential</span>
+              <span class="rfm-tag at-risk">At Risk</span>
+              <span class="rfm-tag hibernating">Hibernating</span>
+            </div>
+          </div>
+
+          <div class="charts-layout">
+            <div class="chart-box">
+              <div class="chart-box-header">
+                <div class="chart-title-group">
+                  <h3>Cohort distribution</h3>
+                  <p class="chart-subtitle">Wallet count per segment</p>
+                </div>
+              </div>
+              <div class="chart-container centered">
+                <canvas id="rfmCohortChart" style="max-height: 250px; max-width: 450px;"></canvas>
+              </div>
+            </div>
+            <div class="chart-box stats-summary-box">
+              <div class="chart-box-header">
+                <h3>Breakdown</h3>
+              </div>
+              <div class="segment-stat-list" id="segmentStatsSummaryList">
+                <div class="segment-stat-placeholder">Loading segments...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-layout rfm-detail-layout">
+            <!-- Left: Wallet profiles -->
+            <div class="card-blur">
+              <div class="table-toolbar">
+                <div class="toolbar-left">
+                  <h3>Wallet Profiles (RFM)</h3>
+                  <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
+                </div>
+                <div class="toolbar-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'csv')">CSV</button>
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('rfm', 'json')">JSON</button>
+                  <div class="table-search-wrapper">
+                    <input type="text" placeholder="Filter..." id="rfmTableSearch" class="input-field">
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Address</th>
+                      <th>Segment</th>
+                      <th class="align-right">Recency</th>
+                      <th class="align-right">Frequency</th>
+                      <th class="align-right">Monetary</th>
+                      <th class="align-right">RFM</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rfmTableBody">
+                    <tr><td colspan="6" class="empty-state-cell">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-pagination">
+                <button class="btn btn-secondary btn-sm" id="prevRfm" onclick="changePage('rfm', -1)">Prev</button>
+                <span class="pagination-indicator" id="rfmPageInfo">Page 1</span>
+                <button class="btn btn-secondary btn-sm" id="nextRfm" onclick="changePage('rfm', 1)">Next</button>
+              </div>
+            </div>
+
+            <!-- Right: Top Holders (Whales) -->
+            <div class="card-blur">
+              <div class="table-toolbar">
+                <div class="toolbar-left">
+                  <h3>Top Holders (Whales)</h3>
+                  <span class="toolbar-info" id="whaleHoldersCountText">0 whales</span>
+                </div>
+                <div class="toolbar-actions">
+                  <button class="btn btn-secondary btn-sm" onclick="exportData('whales', 'csv')">Export CSV</button>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="whale-table">
+                  <thead>
+                    <tr>
+                      <th class="align-center">Rank</th>
+                      <th>Address</th>
+                      <th class="align-right">Balance</th>
+                      <th class="align-right">Share (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="whalesTableBody">
+                    <tr><td colspan="4" class="empty-state-cell">Processing blockchain ledger...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="app-footer">
+        <span>web3analytics 2026</span>
+      </footer>
+
+    </div>
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeWalletDrawer()"></div>
+
+  <div class="wallet-drawer" id="walletDrawer">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="drawer-title-sub">Wallet</span>
+        <h2 id="drawerWalletAddress">0x0000...0000</h2>
+      </div>
+      <button class="drawer-close-btn" onclick="closeWalletDrawer()">&times;</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="drawer-profile-card">
+        <span class="rfm-tag" id="drawerCohortTag">Champion</span>
+        <div class="profile-meta-row">
+          <span class="meta-label">RFM score</span>
+          <span class="meta-value mono" id="drawerRfmCode">555</span>
+        </div>
+      </div>
+
+      <div class="drawer-metrics-grid">
+        <div class="drawer-metric-card">
+          <span class="m-label">Txns</span>
+          <span class="m-value" id="drawerFreqVal">0</span>
+        </div>
+        <div class="drawer-metric-card">
+          <span class="m-label">Volume</span>
+          <span class="m-value" id="drawerMonetaryVal">0.00</span>
+        </div>
+        <div class="drawer-metric-card">
+          <span class="m-label">Last seen</span>
+          <span class="m-value" id="drawerRecencyVal">--</span>
+        </div>
+      </div>
+
+      <div class="drawer-history-section">
+        <h4 class="section-title">History</h4>
+        <div class="drawer-history-list" id="drawerHistoryList">
+          <div class="history-item-placeholder">No records.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-footer">
+      <button class="btn btn-secondary btn-full" id="drawerCopyBtn">Copy address</button>
+    </div>
+  </div>
+
+  <div class="toast" id="copyToast">
+    <span>Copied</span>
+  </div>
+
+  <script src="app.js?v=1.0.2"></script>
+</body>
+</html>

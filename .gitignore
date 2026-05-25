@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+
+# Hardhat
+blockchain/artifacts/
+blockchain/cache/
+blockchain/typechain-types/
+blockchain/deployments/deployment.json
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+analytics/output/*.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
