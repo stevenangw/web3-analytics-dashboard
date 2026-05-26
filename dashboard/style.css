@@ -1144,8 +1144,10 @@ tr:hover td {
 .wallet-drawer {
   position: fixed;
   top: 0;
-  right: -420px;
-  width: 420px;
+  right: -100%;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
   height: 100dvh;
   background-color: var(--glass-bg);
   backdrop-filter: blur(24px);
@@ -1539,7 +1541,7 @@ tr:hover td {
   }
 
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr); /* 2x2 grid fits perfectly in 4-column mobile structure */
+    grid-template-columns: repeat(1, minmax(0, 1fr));
     gap: 16px; /* strict 16px gutter */
   }
 
