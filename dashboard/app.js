@@ -817,8 +817,8 @@ function renderVolumeChart() {
   const ctx = canvas.getContext('2d');
 
   const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, 'rgba(192, 132, 252, 0.25)'); // Violet Accent Glow
-  gradient.addColorStop(1, 'rgba(192, 132, 252, 0)');
+  gradient.addColorStop(0, 'rgba(88, 126, 106, 0.25)'); // Muted Sage Accent Glow
+  gradient.addColorStop(1, 'rgba(88, 126, 106, 0)');
 
   // Format labels nicely on the X axis
   const formattedLabels = labels.map(label => {
@@ -836,15 +836,15 @@ function renderVolumeChart() {
         {
           label: 'Volume',
           data: volumeData,
-          borderColor: '#c084fc', // Accent Violet
+          borderColor: '#587E6A', // Accent Muted Sage Green
           borderWidth: 2,
           fill: true,
           backgroundColor: gradient,
           tension: 0.35,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#c084fc',
-          pointHoverBackgroundColor: '#c084fc',
+          pointBackgroundColor: '#587E6A',
+          pointHoverBackgroundColor: '#587E6A',
           pointHoverBorderColor: '#fafafa',
           pointHoverBorderWidth: 2
         }
@@ -907,15 +907,15 @@ function renderActivityChart(activities) {
   const data = Object.values(typeCounts);
   
   const colors = labels.map(l => {
-    if (l === 'TRANSFER') return '#f43f5e'; // Crimson Rose
-    if (l === 'RECEIVE') return '#34d399'; // Emerald
-    return '#c084fc'; // Violet
+    if (l === 'TRANSFER') return '#B87C7C'; // Muted Rose
+    if (l === 'RECEIVE') return '#648A74'; // Muted Sage Green
+    return '#587E6A'; // Sage Accent
   });
 
   const borderColors = labels.map(l => {
-    if (l === 'TRANSFER') return 'rgba(244, 63, 94, 0.15)';
-    if (l === 'RECEIVE') return 'rgba(52, 211, 153, 0.15)';
-    return 'rgba(192, 132, 252, 0.15)';
+    if (l === 'TRANSFER') return 'rgba(184, 124, 124, 0.15)';
+    if (l === 'RECEIVE') return 'rgba(100, 138, 116, 0.15)';
+    return 'rgba(88, 126, 106, 0.15)';
   });
 
   if (state.charts.activity) {
@@ -973,12 +973,12 @@ function renderRFMCohortChart() {
   const data = Object.values(segments);
 
   const colors = labels.map(label => {
-    if (label === 'Champion') return '#22d3ee';     // Neon Cyan
-    if (label === 'Loyal') return '#c084fc';        // Violet
-    if (label === 'New User') return '#f59e0b';     // Amber
-    if (label === 'Potential') return '#6366f1';    // Indigo
-    if (label === 'At Risk') return '#f43f5e';      // Red
-    return '#94a3b8';                               // Slate
+    if (label === 'Champion') return '#587E6A';     // Muted Sage Green
+    if (label === 'Loyal') return '#7A9687';        // Muted Sage variant
+    if (label === 'New User') return '#C1A278';     // Muted Gold
+    if (label === 'Potential') return '#8FA89B';    // Light Muted Sage
+    if (label === 'At Risk') return '#B87C7C';      // Muted Rose
+    return '#94A3B8';                               // Muted Slate
   });
 
   if (state.charts.cohort) {
@@ -1077,8 +1077,8 @@ function renderGasChart() {
   const ctx = canvas.getContext('2d');
 
   const gradientGas = ctx.createLinearGradient(0, 0, 0, 200);
-  gradientGas.addColorStop(0, 'rgba(245, 158, 11, 0.22)');
-  gradientGas.addColorStop(1, 'rgba(245, 158, 11, 0)');
+  gradientGas.addColorStop(0, 'rgba(193, 162, 120, 0.22)');
+  gradientGas.addColorStop(1, 'rgba(193, 162, 120, 0)');
 
   const formattedLabels = labels.map(label => {
     if (tf === '1h' || tf === '4h' || tf === '1d') {
@@ -1095,15 +1095,15 @@ function renderGasChart() {
         {
           label: 'Avg Gas Price (Gwei)',
           data: avgGasPriceData,
-          borderColor: '#f59e0b', // Amber/Gas color
+          borderColor: '#C1A278', // Amber/Gas color (Muted Gold)
           borderWidth: 2,
           fill: true,
           backgroundColor: gradientGas,
           tension: 0.35,
           pointRadius: 0,
           pointHoverRadius: 6,
-          pointBackgroundColor: '#f59e0b',
-          pointHoverBackgroundColor: '#f59e0b',
+          pointBackgroundColor: '#C1A278',
+          pointHoverBackgroundColor: '#C1A278',
           pointHoverBorderColor: '#fafafa',
           pointHoverBorderWidth: 2
         }

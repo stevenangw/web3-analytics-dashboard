@@ -7,53 +7,50 @@
 
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: dark light;
+  color-scheme: light dark;
 
-  /* Premium OKLCH Color Coordinates */
-  --bg-dark: oklch(14% 0.022 260); /* Futuristic dark canvas */
-  --bg-light: oklch(98% 0.008 260); /* Warm soft slate */
+  /* Premium Desaturated Muted Design Tokens */
+  --bg-light: #F8FAFC;      /* Dominant 60% Canvas - Low-chroma off-white */
+  --bg-dark: #1E293B;       /* Deep slate canvas for dark mode */
   --bg: light-dark(var(--bg-light), var(--bg-dark));
 
-  --surface-dark: oklch(18% 0.026 260);
-  --surface-light: oklch(100% 0 0);
+  --surface-light: #FFFFFF;  /* Cards/Tables surface */
+  --surface-dark: #0F172A;   /* Secondary 30% deep organic dark slate */
   --surface: light-dark(var(--surface-light), var(--surface-dark));
 
-  --border-dark: oklch(24% 0.026 260 / 0.7);
-  --border-light: oklch(91% 0.012 260);
+  --border-light: #E2E8F0;   /* Muted borders */
+  --border-dark: #334155;    /* Dark mode borders */
   --border: light-dark(var(--border-light), var(--border-dark));
 
-  --text-dark: oklch(96% 0.008 260);
-  --text-light: oklch(16% 0.016 260);
+  --text-light: #0F172A;     /* Typography & cards high contrast text */
+  --text-dark: #F1F5F9;      /* Dark mode contrast text */
   --text: light-dark(var(--text-light), var(--text-dark));
 
-  --muted-dark: oklch(62% 0.016 260);
-  --muted-light: oklch(46% 0.012 260);
+  --muted-light: #64748B;    /* Captions/Metadata */
+  --muted-dark: #94A3B8;     /* Dark mode captions */
   --muted: light-dark(var(--muted-light), var(--muted-dark));
 
-  /* Neon Accent System */
-  --accent-violet: oklch(66% 0.22 315); /* Vibrant Hyper-Violet */
-  --accent-cyan: oklch(74% 0.16 195); /* Luminous Electric Cyan */
-  --accent: var(--accent-violet);
+  /* 10% Accent System: Premium Sophisticated Sage Green (30% saturation, 49% HSB) */
+  --accent-sage: #587E6A;
+  --accent: var(--accent-sage);
 
-  --in: oklch(74% 0.16 150); /* Emerald Green */
-  --out: oklch(66% 0.19 15); /* Crimson Rose */
-  --warning: oklch(78% 0.16 75); /* Gold Amber */
+  --in: #648A74;             /* Muted Success green */
+  --out: #B87C7C;            /* Muted Error/Crimson rose */
+  --warning: #C1A278;        /* Muted Gold/Amber */
 
-  /* Typography */
-  --font-display: 'Syne', -apple-system, sans-serif;
-  --font-sans: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  /* Typography Scale */
+  --font-display: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
   --font-mono: 'Space Grotesk', monospace;
 
-  /* Premium Motion Design */
+  /* Motion */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration: 350ms;
+  --duration: 250ms;
 
-  /* Glassmorphism Specs */
-  --glass-bg: light-dark(rgba(255, 255, 255, 0.65), rgba(20, 20, 25, 0.6));
-  --glass-border: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.07));
-  --glass-shadow: light-dark(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.35));
-  --accent-glow: light-dark(rgba(108, 92, 231, 0.08), rgba(108, 92, 231, 0.25));
+  /* Subtle Shadows & Clean Flats (No heavy glow or deep neon shadows) */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --border-radius-sm: 8px;
+  --border-radius-lg: 12px;
 
   accent-color: var(--accent);
 }
@@ -74,8 +71,7 @@ body {
   line-height: 1.5;
   font-size: 16px; /* Avoid iOS native zoom */
   -webkit-font-smoothing: antialiased;
-  background-image: radial-gradient(circle at 80% 20%, light-dark(rgba(108, 92, 231, 0.03), rgba(108, 92, 231, 0.15)), transparent 50%),
-                    radial-gradient(circle at 10% 80%, light-dark(rgba(0, 206, 201, 0.02), rgba(0, 206, 201, 0.08)), transparent 40%);
+  background-image: radial-gradient(circle at 80% 20%, light-dark(rgba(88, 126, 106, 0.03), rgba(88, 126, 106, 0.08)), transparent 50%);
   background-attachment: fixed;
 }
 
@@ -368,7 +364,7 @@ body {
 
 .btn-sidebar-action {
   width: 100%;
-  background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-cyan) 100%);
+  background: var(--accent);
   color: #fff;
   border: none;
 }
@@ -452,9 +448,7 @@ body {
   font-weight: 800;
   letter-spacing: -0.04em;
   text-transform: capitalize;
-  background: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
 }
 
 .nav-right {
@@ -555,7 +549,7 @@ body {
   left: 0;
   width: 100%;
   height: 4px;
-  background: linear-gradient(90deg, var(--accent-violet) 0%, var(--accent-cyan) 100%);
+  background: var(--accent);
   opacity: 0;
   transition: opacity var(--duration) var(--ease-out);
 }
@@ -563,7 +557,7 @@ body {
 .kpi-card:hover {
   transform: translateY(-6px);
   border-color: var(--accent);
-  box-shadow: 0 16px 40px var(--glass-shadow), 0 0 20px var(--accent-glow);
+  box-shadow: 0 8px 16px var(--card-shadow);
 }
 
 .kpi-card:hover::before {
@@ -1428,40 +1422,84 @@ tr:hover td {
     flex-direction: column;
   }
 
+  /* Thumb-Zone Optimized Bottom Navigation Bar */
   .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    height: auto;
-    position: static;
+    height: 64px;
+    background-color: var(--surface);
+    border-top: 1px solid var(--border);
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-left: none;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
   }
 
   .sidebar-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: none; /* Hide branding on bottom mobile nav */
   }
 
   .sidebar-menu {
     flex-direction: row;
-    overflow-x: auto;
-    padding: 8px;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
     gap: 0;
-    -webkit-overflow-scrolling: touch;
   }
 
   .menu-item {
-    border-left: none;
-    border-bottom: 2px solid transparent;
-    padding: 8px 12px;
-    white-space: nowrap;
+    flex-direction: column;
     justify-content: center;
-    flex-shrink: 0;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    font-size: 11px;
+    height: 100%;
+    width: 25%;
+    border-radius: 0;
+    border-left: none;
+    background: none;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  /* Touch Target & Interactive Constraints */
+  .menu-item, 
+  .btn,
+  .input-field,
+  table button,
+  .timeframe-btn {
+    min-height: 48px; /* Strict 48px Touch Target bounding box */
+    min-width: 48px;
   }
 
   .menu-item.active {
-    border-left-color: transparent;
-    border-bottom-color: var(--accent);
+    background-color: transparent;
+    color: var(--accent);
+    box-shadow: none;
+  }
+
+  .menu-item.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    bottom: auto;
+    width: 70%;
+    height: 3px;
+    background-color: var(--accent);
+    border-radius: 2px;
   }
 
   .sidebar-footer {
@@ -1472,22 +1510,60 @@ tr:hover td {
     display: none;
   }
 
+  /* 4-column Mobile-first Grid Spacing & Gutters */
   .content-body {
     padding: 16px;
+    padding-bottom: 80px; /* Safe padding above bottom navigation */
+    gap: 16px;
   }
 
   .top-navbar {
     padding: 0 16px;
     gap: 8px;
+    background-color: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Typography constraints */
+  .view-title {
+    font-size: 24px !important; /* Strict Typographic scale: H1 at 24px bold */
+    line-height: 1.2;
+    background: none;
+    -webkit-text-fill-color: initial;
+    color: var(--text);
+  }
+
+  p, span, td, th {
+    font-size: 16px; /* Body text at exactly 16px to prevent iOS auto-zoom */
+    line-height: 1.5;
   }
 
   .kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr); /* 2x2 grid fits perfectly in 4-column mobile structure */
+    gap: 16px; /* strict 16px gutter */
   }
 
-  .kpi-card:not(:last-child) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+  .kpi-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .kpi-card::before {
+    display: none;
+  }
+
+  .kpi-value {
+    font-size: 24px; /* Scaled down for mobile cards */
+  }
+
+  .charts-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-box {
+    padding: 16px;
+    border-radius: 12px;
   }
 
   .search-box {
@@ -1497,14 +1573,23 @@ tr:hover td {
   .wallet-drawer {
     width: 100%;
     right: -100%;
+    bottom: 64px; /* Above the bottom nav */
+    height: calc(100% - 64px);
   }
 
   .drawer-metrics-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .table-toolbar {
+    padding: 16px;
+    gap: 12px;
   }
 
   .table-toolbar > div {
     flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
