@@ -469,10 +469,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--glass-border);
-  background-color: rgba(var(--surface), 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg); /* Solid opaque background to prevent scrolled shadow artifacts */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -1428,6 +1428,7 @@ tr:hover td {
   background-color: var(--surface);
   color: var(--muted);
   font-size: 10px;
+  margin-top: auto; /* Push footer to the absolute bottom of the viewport */
 }
 
 /* ── Media Queries (Responsive Grid Collapse) ────────────────────────────── */
@@ -1591,9 +1592,49 @@ tr:hover td {
     color: var(--text);
   }
 
-  p, span, td, th {
-    font-size: 16px; /* Body text at exactly 16px to prevent iOS auto-zoom */
-    line-height: 1.5;
+  p, span {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+
+  td, th {
+    font-size: 11px !important;
+    padding: 6px 4px !important;
+    white-space: nowrap !important;
+    font-family: var(--font-mono) !important;
+  }
+
+  .address-pill {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+    white-space: nowrap !important;
+    font-family: var(--font-mono) !important;
+  }
+
+  /* Contained, responsive chart box dimensions */
+  .chart-box {
+    padding: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .chart-box canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 200px !important;
+  }
+
+  /* Force table responsive scrolling to prevent horizontal cutoff */
+  .whale-table,
+  table {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   .kpi-grid {
