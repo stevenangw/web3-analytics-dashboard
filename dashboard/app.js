@@ -14,7 +14,7 @@ const AUTO_REFRESH_MS = 30000; // 30 seconds
 
 // Supabase Cloud standalone fallback credentials
 const SUPABASE_URL = 'https://gqlgcunzwpzanfkgjlkp.supabase.co';
-const SUPABASE_ANON_KEY = ''; // Leave empty to fall back to dynamic client-side simulation when local server is down
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbGdjdW56d3B6YW5ma2dqbGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjgxOTUsImV4cCI6MjA5NTA0NDE5NX0.bEc9Fio5Lf4z2Y_tolbes7FW_OcsK1oclfzSjhEYsbs'; // Configure direct-to-cloud serverless fallback
 
 // Cached full datasets for ultra-fast offline pagination and analysis
 let cachedTransfers = [];
