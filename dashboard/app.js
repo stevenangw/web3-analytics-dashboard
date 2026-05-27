@@ -1341,7 +1341,7 @@ function bindSidebarNavigation() {
         'overview': 'Dashboard Overview',
         'transfers': 'Token Transfers Ledger',
         'activities': 'Synthesized Wallet Activities',
-        'rfm': 'Daftar Wallet'
+        'rfm': 'RFM Segmentation'
       };
       document.getElementById('currentViewTitle').textContent = titles[targetTab] || 'Web3 Analytics';
 
@@ -1362,22 +1362,7 @@ function bindSidebarNavigation() {
   });
 }
 
-function bindSettingsDropdown() {
-  const btn = document.getElementById('settingsBtn');
-  const dropdown = document.getElementById('settingsDropdown');
-  if (!btn || !dropdown) return;
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    dropdown.classList.toggle('active');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-      dropdown.classList.remove('active');
-    }
-  });
-}
 
 // ── Search filters ─────────────────────────────────────────────────────────
 
@@ -1648,8 +1633,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind side-menu navigation
   bindSidebarNavigation();
 
-  // Bind settings dropdown trigger
-  bindSettingsDropdown();
+
 
   // Bind table/global search actions
   bindTableSearchFilters();
