@@ -51,12 +51,197 @@ Chart.defaults.font.size = 11;
 // ── Utilities ──────────────────────────────────────────────────────────────
 
 /**
- * Truncate an Ethereum address or hash for display.
+ * Compute responsive truncation lengths based on viewport width.
+ * Desktop (>960): generous display. Tablet (768-960): moderate. Mobile (<768): compact.
  */
-function truncate(str, start = 6, end = 4) {
-  if (!str || str.length <= start + end + 3) return str || '—';
-  return `${str.slice(0, start)}…${str.slice(-end)}`;
+function getAdaptiveSlice() {
+  const w = window.innerWidth;
+  if (w >= 1200) return { addrStart: 10, addrEnd: 8, hashStart: 16, hashEnd: 10 };
+  if (w >= 960)  return { addrStart: 8,  addrEnd: 6, hashStart: 12, hashEnd: 8 };
+  if (w >= 768)  return { addrStart: 6,  addrEnd: 4, hashStart: 10, hashEnd: 6 };
+  return { addrStart: 5, addrEnd: 4, hashStart: 8, hashEnd: 4 };
 }
+
+/**
+ * Truncate an Ethereum address or hash for display.
+ * When isAddress=true, uses adaptive viewport-based lengths.
+ */
+function truncate(str, start, end) {
+  if (!str || str === '—') return '—';
+  const adaptive = getAdaptiveSlice();
+  const s = start !== undefined ? start : adaptive.addrStart;
+  const e = end !== undefined ? end : adaptive.addrEnd;
+  if (str.length <= s + e + 3) return str;
+  return `${str.slice(0, s)}…${str.slice(-e)}`;
+}
+
+/**
+ * Re-truncate all visible address pills and tx hashes based on current viewport.
+ * Call after any table render or on window resize.
+ */
+function adaptAddresses() {
+  const addrSteps = [
+    { start: 42, end: 0 },
+    { start: 16, end: 14 },
+    { start: 12, end: 10 },
+    { start: 8, end: 6 },
+    { start: 6, end: 4 },
+    { start: 5, end: 4 }
+  ];
+
+  const hashSteps = [
+    { start: 66, end: 0 },
+    { start: 24, end: 20 },
+    { start: 16, end: 12 },
+    { start: 12, end: 8 },
+    { start: 8, end: 6 },
+    { start: 6, end: 4 }
+  ];
+
+  function setElementStep(el, stepIdx, type) {
+    const attr = type === 'addr' ? 'data-full-addr' : 'data-full-hash';
+    const full = el.getAttribute(attr);
+    if (!full) return;
+
+    const steps = type === 'addr' ? addrSteps : hashSteps;
+    const step = steps[stepIdx];
+
+    if (step.start >= full.length) {
+      el.textContent = full;
+    } else {
+      el.textContent = `${full.slice(0, step.start)}…${full.slice(-step.end)}`;
+    }
+  }
+
+  // 1. Process all responsive table containers
+  document.querySelectorAll('.table-responsive').forEach(container => {
+    const table = container.querySelector('table');
+    if (!table) return;
+
+    const addrEls = container.querySelectorAll('[data-full-addr]');
+    const hashEls = container.querySelectorAll('[data-full-hash]');
+    if (addrEls.length === 0 && hashEls.length === 0) return;
+
+    for (let step = 0; step < addrSteps.length; step++) {
+      addrEls.forEach(el => setElementStep(el, step, 'addr'));
+      hashEls.forEach(el => setElementStep(el, step, 'hash'));
+
+      let hasOverflow = false;
+      
+      // Check table overflow
+      if (table.scrollWidth > container.clientWidth) {
+        hasOverflow = true;
+      }
+
+      // Check individual elements relative to parent cells
+      if (!hasOverflow) {
+        const allEls = [...addrEls, ...hashEls];
+        for (const el of allEls) {
+          const parent = el.closest('td') || el.parentElement;
+          if (!parent) continue;
+
+          const parentStyle = window.getComputedStyle(parent);
+          const paddingLeft = parseFloat(parentStyle.paddingLeft) || 0;
+          const paddingRight = parseFloat(parentStyle.paddingRight) || 0;
+          const parentWidth = parent.clientWidth || parent.getBoundingClientRect().width;
+          const parentAvailableWidth = parentWidth - paddingLeft - paddingRight;
+
+          if (el.getBoundingClientRect().width > parentAvailableWidth) {
+            hasOverflow = true;
+            break;
+          }
+        }
+      }
+
+      if (!hasOverflow) {
+        break;
+      }
+    }
+  });
+
+  // 2. Process feed container
+  document.querySelectorAll('.feed-container').forEach(container => {
+    const addrEls = container.querySelectorAll('[data-full-addr]');
+    if (addrEls.length === 0) return;
+
+    for (let step = 0; step < addrSteps.length; step++) {
+      addrEls.forEach(el => setElementStep(el, step, 'addr'));
+
+      let hasOverflow = false;
+      const feedItems = container.querySelectorAll('.feed-item');
+      for (const item of feedItems) {
+        if (item.scrollWidth > item.clientWidth) {
+          hasOverflow = true;
+          break;
+        }
+      }
+
+      if (!hasOverflow && (container.scrollWidth <= container.clientWidth)) {
+        break;
+      }
+    }
+  });
+
+  // 3. Process drawer history list and the wallet drawer itself
+  document.querySelectorAll('.drawer-history-list, .wallet-drawer').forEach(container => {
+    const addrEls = container.querySelectorAll('[data-full-addr]');
+    const hashEls = container.querySelectorAll('[data-full-hash]');
+    if (addrEls.length === 0 && hashEls.length === 0) return;
+
+    for (let step = 0; step < addrSteps.length; step++) {
+      addrEls.forEach(el => setElementStep(el, step, 'addr'));
+      hashEls.forEach(el => setElementStep(el, step, 'hash'));
+
+      let hasOverflow = false;
+      const items = container.querySelectorAll('.history-item');
+      for (const item of items) {
+        if (item.scrollWidth > item.clientWidth) {
+          hasOverflow = true;
+          break;
+        }
+      }
+
+      if (!hasOverflow && (container.scrollWidth <= container.clientWidth)) {
+        break;
+      }
+    }
+  });
+
+  // 4. Handle standalone elements
+  const allAddrEls = document.querySelectorAll('[data-full-addr]');
+  const allHashEls = document.querySelectorAll('[data-full-hash]');
+  
+  const handledSelector = '.table-responsive [data-full-addr], .feed-container [data-full-addr], .drawer-history-list [data-full-addr], .wallet-drawer [data-full-addr]';
+  const handledHashSelector = '.table-responsive [data-full-hash], .feed-container [data-full-hash], .drawer-history-list [data-full-hash], .wallet-drawer [data-full-hash]';
+
+  const handledAddrs = new Set(document.querySelectorAll(handledSelector));
+  const handledHashes = new Set(document.querySelectorAll(handledHashSelector));
+
+  const w = window.innerWidth;
+  let fallbackStep = 4;
+  if (w >= 1200) fallbackStep = 2;
+  else if (w >= 960) fallbackStep = 3;
+  else if (w >= 768) fallbackStep = 4;
+  else fallbackStep = 5;
+
+  allAddrEls.forEach(el => {
+    if (!handledAddrs.has(el)) {
+      setElementStep(el, fallbackStep, 'addr');
+    }
+  });
+
+  allHashEls.forEach(el => {
+    if (!handledHashes.has(el)) {
+      setElementStep(el, fallbackStep, 'hash');
+    }
+  });
+}
+
+let _adaptDebounce;
+window.addEventListener('resize', () => {
+  clearTimeout(_adaptDebounce);
+  _adaptDebounce = setTimeout(adaptAddresses, 100);
+});
 
 /**
  * Format a large number with thousands separator.
@@ -560,8 +745,8 @@ function renderWhalesTable() {
       <tr>
         <td class="mono font-600 align-center" style="color: ${index < 3 ? 'var(--accent)' : 'var(--muted)'}">#${index + 1}</td>
         <td>
-          <span class="address-pill" onclick="openWalletDrawer('${h.address}')" title="Click to inspect Wallet">
-            ${truncate(h.address, 5, 4)}
+          <span class="address-pill" data-full-addr="${h.address}" onclick="openWalletDrawer('${h.address}')" title="Click to inspect Wallet">
+            ${truncate(h.address)}
           </span>
         </td>
         <td class="align-right mono font-600 text-title">${parseFloat(formatTokenValue(balanceBI)).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
@@ -569,6 +754,7 @@ function renderWhalesTable() {
       </tr>
     `;
   }).join('');
+  adaptAddresses();
 }
 
 // ── Direct Supabase Mock Status Fetchers ────────────────────────────────────
@@ -783,18 +969,18 @@ function renderTransfersTable(filteredData = null) {
   tbody.innerHTML = data.map(t => `
     <tr>
       <td>
-        <span class="tx-hash-link" onclick="copyToClipboard('${t.transaction_hash}')" title="Click to copy Transaction Hash">
-          ${truncate(t.transaction_hash, 12, 8)}
+        <span class="tx-hash-link" data-full-hash="${t.transaction_hash}" onclick="copyToClipboard('${t.transaction_hash}')" title="Click to copy Transaction Hash">
+          ${truncate(t.transaction_hash)}
         </span>
       </td>
       <td class="mono font-500">${formatNumber(t.block_number)}</td>
       <td>
-        <span class="address-pill" onclick="openWalletDrawer('${t.from_address}')" title="Click to inspect Wallet">
+        <span class="address-pill" data-full-addr="${t.from_address}" onclick="openWalletDrawer('${t.from_address}')" title="Click to inspect Wallet">
           ${truncate(t.from_address)}
         </span>
       </td>
       <td>
-        <span class="address-pill" onclick="openWalletDrawer('${t.to_address}')" title="Click to inspect Wallet">
+        <span class="address-pill" data-full-addr="${t.to_address}" onclick="openWalletDrawer('${t.to_address}')" title="Click to inspect Wallet">
           ${truncate(t.to_address)}
         </span>
       </td>
@@ -823,11 +1009,11 @@ function renderActivitiesTable(filteredData = null) {
     <tr>
       <td>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="address-pill" onclick="openWalletDrawer('${a.sender || '—'}')" title="Click to inspect Sender Wallet">
+          <span class="address-pill" data-full-addr="${a.sender || ''}" onclick="openWalletDrawer('${a.sender || '—'}')" title="Click to inspect Sender Wallet">
             ${truncate(a.sender)}
           </span>
           <span style="color: var(--muted); font-size: 11px;">➔</span>
-          <span class="address-pill" onclick="openWalletDrawer('${a.receiver || '—'}')" title="Click to inspect Receiver Wallet">
+          <span class="address-pill" data-full-addr="${a.receiver || ''}" onclick="openWalletDrawer('${a.receiver || '—'}')" title="Click to inspect Receiver Wallet">
             ${truncate(a.receiver)}
           </span>
         </div>
@@ -838,8 +1024,8 @@ function renderActivitiesTable(filteredData = null) {
       <td class="align-right mono font-600 text-title">${formatTokenValue(a.amount)}</td>
       <td class="mono">${formatNumber(a.block_number)}</td>
       <td>
-        <span class="tx-hash-link" onclick="copyToClipboard('${a.transaction_hash}')" title="Copy Hash">
-          ${truncate(a.transaction_hash, 8, 4)}
+        <span class="tx-hash-link" data-full-hash="${a.transaction_hash}" onclick="copyToClipboard('${a.transaction_hash}')" title="Copy Hash">
+          ${truncate(a.transaction_hash)}
         </span>
       </td>
       <td class="align-right text-muted">${formatTime(a.block_timestamp)}</td>
@@ -847,6 +1033,7 @@ function renderActivitiesTable(filteredData = null) {
   `).join('');
 
   pageInfo.textContent = `Page ${state.activities.page}`;
+  adaptAddresses();
 }
 
 function renderLiveFeed(transfers) {
@@ -864,9 +1051,9 @@ function renderLiveFeed(transfers) {
       <div class="feed-item">
         <div class="feed-item-main">
           <div class="feed-route">
-            <span class="address" onclick="openWalletDrawer('${t.from_address}')" title="${t.from_address}">${truncate(t.from_address)}</span>
+            <span class="address" data-full-addr="${t.from_address}" onclick="openWalletDrawer('${t.from_address}')" title="${t.from_address}">${truncate(t.from_address)}</span>
             <span class="transfer-arrow">→</span>
-            <span class="address" onclick="openWalletDrawer('${t.to_address}')" title="${t.to_address}">${truncate(t.to_address)}</span>
+            <span class="address" data-full-addr="${t.to_address}" onclick="openWalletDrawer('${t.to_address}')" title="${t.to_address}">${truncate(t.to_address)}</span>
           </div>
           <div class="feed-time-sub">${formatTime(t.block_timestamp)}</div>
         </div>
@@ -876,6 +1063,7 @@ function renderLiveFeed(transfers) {
       </div>
     `;
   }).join('');
+  adaptAddresses();
 }
 
 // ── RFM View Rendering ─────────────────────────────────────────────────────
@@ -901,8 +1089,8 @@ function renderRFMView(filteredData = null) {
   tbody.innerHTML = data.map(w => `
     <tr>
       <td>
-        <span class="address-pill" onclick="openWalletDrawer('${w.wallet_address}')" title="Inspect profile">
-          ${truncate(w.wallet_address, 6, 4)}
+        <span class="address-pill" data-full-addr="${w.wallet_address}" onclick="openWalletDrawer('${w.wallet_address}')" title="Inspect profile">
+          ${truncate(w.wallet_address)}
         </span>
       </td>
       <td>
@@ -924,6 +1112,7 @@ function renderRFMView(filteredData = null) {
 
   // Render or update RFM cohort chart
   renderRFMCohortChart();
+  adaptAddresses();
 }
 
 function renderRFMStatSummaries() {
@@ -1021,11 +1210,11 @@ function openWalletDrawer(address) {
             <span class="history-amount ${amtClass}">${prefix}${val.toFixed(2)} tokens</span>
           </div>
           <div class="history-item-bottom">
-            <span>Counterparty: <span class="history-counterparty">${truncate(counterparty, 6, 4)}</span></span>
+            <span>Counterparty: <span class="history-counterparty" data-full-addr="${counterparty}">${truncate(counterparty, 6, 4)}</span></span>
             <span>Block <span class="mono">${t.block_number}</span></span>
           </div>
           <div class="history-item-bottom">
-            <span>Tx: <span class="history-tx">${truncate(t.transaction_hash, 10, 6)}</span></span>
+            <span>Tx: <span class="history-tx" data-full-hash="${t.transaction_hash}">${truncate(t.transaction_hash, 10, 6)}</span></span>
             <span>${formatTime(t.block_timestamp)}</span>
           </div>
         </div>
@@ -1039,6 +1228,7 @@ function openWalletDrawer(address) {
   // Open Drawer and Overlay
   document.getElementById('walletDrawer').classList.add('open');
   document.getElementById('drawerOverlay').classList.add('active');
+  adaptAddresses();
 }
 
 function closeWalletDrawer() {
