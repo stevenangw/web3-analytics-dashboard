@@ -1815,12 +1815,12 @@ button:focus-visible {
 
 /* Compact Whales Table Style */
 .whale-table th {
-  padding: 8px 6px !important;
+  padding: var(--sp-table-cell) !important;
 }
 
 .whale-table td {
-  padding: 8px 6px !important;
-  font-size: 11px !important;
+  padding: var(--sp-table-cell) !important;
+  font-size: var(--fs-table-td) !important;
 }
 
 /* ── Ingest Data Button Left Sidebar ────────────────────────────────────── */
@@ -2032,7 +2032,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(1) {
     display: block !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     color: var(--text) !important;
     padding: 0 0 6px 0 !important;
@@ -2051,7 +2051,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(3) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2061,7 +2061,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(4) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2074,7 +2074,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(5) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2090,7 +2090,7 @@ button:focus-visible {
     position: absolute !important;
     right: 16px !important;
     top: 16px !important;
-    font-size: 20px !important;
+    font-size: 16px !important;
     font-weight: 800 !important;
     color: var(--accent) !important;
     padding: 0 !important;
