@@ -86,17 +86,6 @@ async function initializeDatabase() {
       );
     `);
 
-    // ── Deduplicate existing rows before adding unique constraint ──────────
-    // Keeps the row with the lowest id for each (tx_hash, wallet, type) group.
-    await client.query(`
-      DELETE FROM user_activities
-      WHERE id NOT IN (
-        SELECT MIN(id)
-        FROM user_activities
-        GROUP BY transaction_hash, wallet_address, activity_type
-      );
-    `);
-
     // ── Add unique constraint (idempotent via DO/EXCEPTION block) ──────────
     await client.query(`
       DO $$ BEGIN
@@ -108,6 +97,13 @@ async function initializeDatabase() {
           -- Constraint already exists; nothing to do
           NULL;
       END $$;
+    `);
+
+    // ── Create Indexes for Performance ──────────────────────────────────────
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_transfers_timestamp ON token_transfers(block_timestamp DESC);
+      CREATE INDEX IF NOT EXISTS idx_activities_wallet ON user_activities(wallet_address);
+      CREATE INDEX IF NOT EXISTS idx_activities_timestamp ON user_activities(block_timestamp DESC);
     `);
 
     await client.query('COMMIT');

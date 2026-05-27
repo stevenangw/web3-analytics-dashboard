@@ -23,23 +23,23 @@ def get_connection():
     return psycopg2.connect(
         host=os.getenv('DB_HOST', 'localhost'),
         port=os.getenv('DB_PORT', '5432'),
-        database=os.getenv('DB_NAME', 'web3_analytics'),
+        database=os.getenv('DB_NAME', 'web3analytics'),
         user=os.getenv('DB_USER', 'postgres'),
         password=os.getenv('DB_PASSWORD', 'postgres')
     )
 
 
 def compute_daily_stats(conn, start_date, end_date):
-    """Compute DAU, daily volume, daily gas expenditure."""
+    """Compute DAU, daily volume, daily gas expenditure scaled down to standard units."""
     # Query token_transfers within the window
     query = """
         SELECT 
             DATE(block_timestamp AT TIME ZONE 'UTC') as tx_date,
             COUNT(*) as tx_count,
             COUNT(DISTINCT from_address) + COUNT(DISTINCT to_address) as unique_wallets_approx,
-            COALESCE(SUM(value), 0) as total_volume,
+            COALESCE(SUM(value / 10^18), 0)::numeric as total_volume,
             COALESCE(SUM(CASE WHEN gas_used IS NOT NULL AND gas_price IS NOT NULL 
-                         THEN gas_used * gas_price ELSE 0 END), 0) as total_gas_cost
+                         THEN (gas_used * gas_price) / 10^18 ELSE 0 END), 0)::numeric as total_gas_cost
         FROM token_transfers
         WHERE block_timestamp >= %s AND block_timestamp < %s
         GROUP BY DATE(block_timestamp AT TIME ZONE 'UTC')
@@ -71,7 +71,7 @@ def compute_rfm(conn, start_date, end_date, now):
             wallet_address,
             MAX(block_timestamp) as last_activity,
             COUNT(*) as frequency,
-            SUM(amount) as monetary
+            SUM(amount / 10^18)::numeric as monetary
         FROM user_activities
         WHERE block_timestamp >= %s AND block_timestamp < %s
         GROUP BY wallet_address
@@ -130,7 +130,7 @@ def compute_wallet_summary(conn, start_date, end_date):
             wallet_address,
             activity_type,
             COUNT(*) as count,
-            SUM(amount) as total_amount,
+            SUM(amount / 10^18)::numeric as total_amount,
             MIN(block_timestamp) as first_seen,
             MAX(block_timestamp) as last_seen
         FROM user_activities
@@ -147,8 +147,29 @@ def main():
     print('Web3 Analytics Engine — Dynamic 14-Day Rolling Pipeline')
     print('=' * 60)
 
-    # Dynamic time bounds — ZERO hardcoded dates
-    now = datetime.now(timezone.utc)
+    # Dynamic time bounds — query DB for highest timestamp to anchor window, fallback to UTC now
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT GREATEST(
+                (SELECT MAX(block_timestamp) FROM user_activities),
+                (SELECT MAX(block_timestamp) FROM token_transfers)
+            )
+        """)
+        max_time = cursor.fetchone()[0]
+        cursor.close()
+        conn.close()
+        if max_time:
+            # Handle tz-aware datetime from pg
+            now = max_time
+            if now.tzinfo is None:
+                now = now.replace(tzinfo=timezone.utc)
+        else:
+            now = datetime.now(timezone.utc)
+    except Exception:
+        now = datetime.now(timezone.utc)
+
     end_date = now
     start_date = now - timedelta(days=14)
 

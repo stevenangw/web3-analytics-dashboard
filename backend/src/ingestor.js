@@ -38,7 +38,21 @@ const { synthesizeActivities }           = require('./utils/synthesizer');
 
 // ── Block-timestamp cache ──────────────────────────────────────────────────
 // Avoids redundant provider.getBlock() calls for the same block number.
+// Implements a size-limited cache (max 5000 items) to prevent memory leaks.
+const MAX_CACHE_SIZE = 5000;
 const blockTimestampCache = new Map();
+const blockTimestampCacheKeys = [];
+
+function setBlockTimestampInCache(key, value) {
+  if (!blockTimestampCache.has(key)) {
+    blockTimestampCacheKeys.push(key);
+  }
+  blockTimestampCache.set(key, value);
+  if (blockTimestampCacheKeys.length > MAX_CACHE_SIZE) {
+    const oldestKey = blockTimestampCacheKeys.shift();
+    blockTimestampCache.delete(oldestKey);
+  }
+}
 
 /**
  * Fetch (and cache) the UNIX timestamp for a given block number.
@@ -55,7 +69,7 @@ async function getBlockTimestamp(provider, blockNumber) {
   const block = await provider.getBlock(blockNumber);
   // block.timestamp is seconds since epoch
   const isoTimestamp = new Date(block.timestamp * 1000).toISOString();
-  blockTimestampCache.set(blockNumber, isoTimestamp);
+  setBlockTimestampInCache(blockNumber, isoTimestamp);
   return isoTimestamp;
 }
 
@@ -81,15 +95,22 @@ async function processTransferEvent(event, provider) {
     // Fetch gas information from the transaction receipt
     let gasUsed  = null;
     let gasPrice = null;
-    try {
-      const receipt = await provider.getTransactionReceipt(txHash);
-      if (receipt) {
-        gasUsed  = receipt.gasUsed.toString();
-        gasPrice = receipt.gasPrice ? receipt.gasPrice.toString() : null;
+
+    // Safety check: Only query receipts on local node OR for high value (whale) transfers to prevent RPC congestion/rate limiting
+    const isLocal = !process.env.TRACKED_TOKEN_ADDRESS;
+    const isWhale = BigInt(value) >= BigInt("1000000000000000000000"); // >= 1,000 tokens
+
+    if (isLocal || isWhale) {
+      try {
+        const receipt = await provider.getTransactionReceipt(txHash);
+        if (receipt) {
+          gasUsed  = receipt.gasUsed.toString();
+          gasPrice = receipt.gasPrice ? receipt.gasPrice.toString() : null;
+        }
+      } catch (gasErr) {
+        // Non-critical — proceed without gas data
+        console.warn(`[Ingestor] ⚠ Could not fetch gas info for ${txHash}: ${gasErr.message}`);
       }
-    } catch (gasErr) {
-      // Non-critical — proceed without gas data
-      console.warn(`[Ingestor] ⚠ Could not fetch gas info for ${txHash}: ${gasErr.message}`);
     }
 
     // 1. Persist raw transfer

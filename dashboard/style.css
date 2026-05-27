@@ -12,23 +12,26 @@
   /* Premium Desaturated Muted Design Tokens */
   --bg-light: #F8FAFC;      /* Dominant 60% Canvas - Low-chroma off-white */
   --bg-dark: #1E293B;       /* Deep slate canvas for dark mode */
-  --bg: light-dark(var(--bg-light), var(--bg-dark));
+  --bg: var(--bg-dark);
 
   --surface-light: #FFFFFF;  /* Cards/Tables surface */
   --surface-dark: #0F172A;   /* Secondary 30% deep organic dark slate */
-  --surface: light-dark(var(--surface-light), var(--surface-dark));
+  --surface: var(--surface-dark);
 
   --border-light: #E2E8F0;   /* Muted borders */
   --border-dark: #334155;    /* Dark mode borders */
-  --border: light-dark(var(--border-light), var(--border-dark));
+  --border: var(--border-dark);
 
   --text-light: #0F172A;     /* Typography & cards high contrast text */
   --text-dark: #F1F5F9;      /* Dark mode contrast text */
-  --text: light-dark(var(--text-light), var(--text-dark));
+  --text: var(--text-dark);
 
   --muted-light: #64748B;    /* Captions/Metadata */
   --muted-dark: #94A3B8;     /* Dark mode captions */
-  --muted: light-dark(var(--muted-light), var(--muted-dark));
+  --muted: var(--muted-dark);
+
+  --radial-bg: rgba(88, 126, 106, 0.08);
+  --skeleton-highlight: rgba(255, 255, 255, 0.05);
 
   /* 10% Accent System: Premium Sophisticated Sage Green (30% saturation, 49% HSB) */
   --accent-sage: #587E6A;
@@ -55,6 +58,26 @@
   accent-color: var(--accent);
 }
 
+:root[data-color-scheme="light"] {
+  --bg: var(--bg-light);
+  --surface: var(--surface-light);
+  --border: var(--border-light);
+  --text: var(--text-light);
+  --muted: var(--muted-light);
+  --radial-bg: rgba(88, 126, 106, 0.03);
+  --skeleton-highlight: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-color-scheme="dark"] {
+  --bg: var(--bg-dark);
+  --surface: var(--surface-dark);
+  --border: var(--border-dark);
+  --text: var(--text-dark);
+  --muted: var(--muted-dark);
+  --radial-bg: rgba(88, 126, 106, 0.08);
+  --skeleton-highlight: rgba(255, 255, 255, 0.05);
+}
+
 /* ── Reset & Core Styles ──────────────────────────────────────────────────── */
 *, *::before, *::after {
   margin: 0;
@@ -71,7 +94,7 @@ body {
   line-height: 1.5;
   font-size: 16px; /* Avoid iOS native zoom */
   -webkit-font-smoothing: antialiased;
-  background-image: radial-gradient(circle at 80% 20%, light-dark(rgba(88, 126, 106, 0.03), rgba(88, 126, 106, 0.08)), transparent 50%);
+  background-image: radial-gradient(circle at 80% 20%, var(--radial-bg), transparent 50%);
   background-attachment: fixed;
 }
 
@@ -1677,7 +1700,7 @@ button:focus-visible {
 
 /* Skeleton loading shimmer */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface) 25%, light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.05)) 50%, var(--surface) 75%);
+  background: linear-gradient(90deg, var(--surface) 25%, var(--skeleton-highlight) 50%, var(--surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 4px;

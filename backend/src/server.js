@@ -45,10 +45,45 @@ const PORT = parseInt(process.env.PORT, 10) || 3001;
 // Track ingestor state so the /health endpoint can report it
 let ingestorInfo = { mode: 'starting', tokenAddress: null, status: 'pending' };
 
-// ── Middleware ──────────────────────────────────────────────────────────────
-app.use(cors());
+// ── Middleware & Centralised Parsers ─────────────────────────────────────────
+
+// Standardised CORS options
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, '../../dashboard')));
+
+// Centralised Pagination Parser
+function parsePagination(req, res, next) {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 50, 500);
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  req.pagination = { limit, offset };
+  next();
+}
+
+// ── In-Memory Cache Engine ───────────────────────────────────────────
+const apiCache = {
+  stats: { data: null, timestamp: 0 },
+  rfm: { data: null, timestamp: 0 },
+  holders: { data: null, timestamp: 0 }
+};
+const CACHE_TTL_MS = 5000; // 5-second TTL
+
+function getCachedData(key) {
+  const item = apiCache[key];
+  if (item && Date.now() - item.timestamp < CACHE_TTL_MS) {
+    return item.data;
+  }
+  return null;
+}
+
+function setCachedData(key, data) {
+  apiCache[key] = { data, timestamp: Date.now() };
+}
 
 // ---------------------------------------------------------------------------
 // Routes
@@ -58,45 +93,48 @@ app.use(express.static(path.resolve(__dirname, '../../dashboard')));
  * GET /health
  * Quick liveness / readiness probe.
  */
-app.get('/health', async (_req, res) => {
+app.get('/health', async (_req, res, next) => {
   try {
     const lastBlock = await getLastProcessedBlock();
     res.json({
-      status:    'ok',
-      mode:      ingestorInfo.mode,
-      uptime:    process.uptime(),
-      lastBlock: lastBlock,
+      success: true,
+      data: {
+        status:    'ok',
+        mode:      ingestorInfo.mode,
+        uptime:    process.uptime(),
+        lastBlock: lastBlock,
+      },
+      message: 'Health status retrieved'
     });
   } catch (err) {
-    res.status(500).json({ status: 'error', message: err.message });
+    next(err);
   }
 });
 
 /**
  * POST /ingest
- * Manually trigger a backfill cycle (useful for admin / debugging).
+ * Manually trigger a backfill cycle.
  */
-app.post('/ingest', async (_req, res) => {
+app.post('/ingest', async (_req, res, next) => {
   try {
-    // Re-run the ingestor (it will resume from the last checkpoint)
     ingestorInfo = await startIngestor();
-    res.json({ message: 'Ingestion triggered', info: ingestorInfo });
+    res.json({
+      success: true,
+      data: ingestorInfo,
+      message: 'Ingestion triggered successfully'
+    });
   } catch (err) {
-    console.error('[Server] ✖ Manual ingestion error:', err.message);
-    res.status(500).json({ message: 'Ingestion failed', error: err.message });
+    next(err);
   }
 });
 
 /**
  * GET /api/transfers
  * Paginated list of raw token transfer events.
- * Query params: limit (default 50, max 500), offset (default 0)
  */
-app.get('/api/transfers', async (req, res) => {
+app.get('/api/transfers', parsePagination, async (req, res, next) => {
   try {
-    const limit  = Math.min(parseInt(req.query.limit, 10) || 50, 500);
-    const offset = parseInt(req.query.offset, 10) || 0;
-
+    const { limit, offset } = req.pagination;
     const pool   = getPool();
     const result = await pool.query(
       `SELECT id, transaction_hash, block_number, block_timestamp,
@@ -108,27 +146,27 @@ app.get('/api/transfers', async (req, res) => {
     );
 
     res.json({
-      transfers: result.rows,
-      count:     result.rows.length,
-      limit,
-      offset,
+      success: true,
+      data: {
+        transfers: result.rows,
+        count:     result.rows.length,
+        limit,
+        offset,
+      },
+      message: 'Transfers retrieved successfully'
     });
   } catch (err) {
-    console.error('[Server] ✖ /api/transfers error:', err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
 /**
  * GET /api/activities
  * Paginated list of synthesised user activities.
- * Query params: limit (default 50, max 500), offset (default 0)
  */
-app.get('/api/activities', async (req, res) => {
+app.get('/api/activities', parsePagination, async (req, res, next) => {
   try {
-    const limit  = Math.min(parseInt(req.query.limit, 10) || 50, 500);
-    const offset = parseInt(req.query.offset, 10) || 0;
-
+    const { limit, offset } = req.pagination;
     const pool   = getPool();
     const result = await pool.query(
       `SELECT id, transaction_hash, wallet_address, activity_type,
@@ -140,26 +178,36 @@ app.get('/api/activities', async (req, res) => {
     );
 
     res.json({
-      activities: result.rows,
-      count:      result.rows.length,
-      limit,
-      offset,
+      success: true,
+      data: {
+        activities: result.rows,
+        count:      result.rows.length,
+        limit,
+        offset,
+      },
+      message: 'Activities retrieved successfully'
     });
   } catch (err) {
-    console.error('[Server] ✖ /api/activities error:', err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
 
 /**
  * GET /api/stats
- * Aggregate dashboard statistics.
+ * Aggregate dashboard statistics. Cached for 5s.
  */
-app.get('/api/stats', async (_req, res) => {
+app.get('/api/stats', async (_req, res, next) => {
   try {
-    const pool = getPool();
+    const cached = getCachedData('stats');
+    if (cached) {
+      return res.json({
+        success: true,
+        data: cached,
+        message: 'Stats retrieved from cache'
+      });
+    }
 
-    // Run all stat queries concurrently for speed
+    const pool = getPool();
     const [transfersRes, activitiesRes, walletsRes, latestBlockRes] = await Promise.all([
       pool.query('SELECT COUNT(*)::int AS total FROM token_transfers'),
       pool.query('SELECT COUNT(*)::int AS total FROM user_activities'),
@@ -167,27 +215,90 @@ app.get('/api/stats', async (_req, res) => {
       pool.query('SELECT MAX(block_number)::bigint AS latest FROM token_transfers'),
     ]);
 
-    res.json({
+    const stats = {
       totalTransfers:  transfersRes.rows[0].total,
       totalActivities: activitiesRes.rows[0].total,
       uniqueWallets:   walletsRes.rows[0].total,
-      latestBlock:     latestBlockRes.rows[0].latest,
+      latestBlock:     latestBlockRes.rows[0].latest ? parseInt(latestBlockRes.rows[0].latest, 10) : 0,
+    };
+
+    setCachedData('stats', stats);
+
+    res.json({
+      success: true,
+      data: stats,
+      message: 'Stats retrieved successfully'
     });
   } catch (err) {
-    console.error('[Server] ✖ /api/stats error:', err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
+  }
+});
+
+/**
+ * GET /api/holders
+ * Calculates token holder balances dynamically from all transfers. Cached for 5s.
+ */
+app.get('/api/holders', async (req, res, next) => {
+  try {
+    const cached = getCachedData('holders');
+    if (cached) {
+      return res.json({
+        success: true,
+        data: cached,
+        message: 'Holders retrieved from cache'
+      });
+    }
+
+    const pool = getPool();
+    const query = `
+      SELECT 
+        address,
+        SUM(balance)::numeric AS balance
+      FROM (
+        SELECT to_address AS address, value AS balance FROM token_transfers
+        UNION ALL
+        SELECT from_address AS address, -value AS balance FROM token_transfers
+      ) t
+      WHERE address != '0x0000000000000000000000000000000000000000'
+      GROUP BY address
+      HAVING SUM(balance) > 0
+      ORDER BY balance DESC
+    `;
+    const result = await pool.query(query);
+    const holders = result.rows.map(h => ({
+      address: h.address,
+      balance: h.balance ? h.balance.toString() : '0'
+    }));
+
+    setCachedData('holders', holders);
+
+    res.json({
+      success: true,
+      data: holders,
+      message: 'Holders calculated successfully'
+    });
+  } catch (err) {
+    next(err);
   }
 });
 
 /**
  * GET /api/rfm
- * Dynamic RFM segmentation calculated in real-time from user activities.
+ * Dynamic RFM segmentation calculated in real-time. Cached for 5s.
  */
-app.get('/api/rfm', async (_req, res) => {
+app.get('/api/rfm', async (_req, res, next) => {
   try {
+    const cached = getCachedData('rfm');
+    if (cached) {
+      return res.json({
+        success: true,
+        data: cached,
+        message: 'RFM segmentation retrieved from cache'
+      });
+    }
+
     const pool = getPool();
     
-    // Get max block_timestamp as relative "now" so local dev dates are computed correctly
     const maxTimeRes = await pool.query('SELECT MAX(block_timestamp) as max_time FROM user_activities');
     const now = maxTimeRes.rows[0].max_time ? new Date(maxTimeRes.rows[0].max_time) : new Date();
 
@@ -205,7 +316,13 @@ app.get('/api/rfm', async (_req, res) => {
     const rows = result.rows;
 
     if (rows.length === 0) {
-      return res.json({ segments: {}, wallets: [] });
+      const data = { segments: {}, wallets: [] };
+      setCachedData('rfm', data);
+      return res.json({
+        success: true,
+        data,
+        message: 'No activities found for RFM calculation'
+      });
     }
 
     const wallets = rows.map(row => {
@@ -284,16 +401,33 @@ app.get('/api/rfm', async (_req, res) => {
       segments[w.segment] = (segments[w.segment] || 0) + 1;
     });
 
-    res.json({
+    const rfmData = {
       segments,
       wallets: computedWallets
-    });
+    };
 
+    setCachedData('rfm', rfmData);
+
+    res.json({
+      success: true,
+      data: rfmData,
+      message: 'RFM segmentation calculated successfully'
+    });
   } catch (err) {
-    console.error('[Server] ✖ /api/rfm error:', err.message);
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 });
+
+// ── Global Error Handling Middleware ─────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('[Fatal Error Handler] ✖:', err.stack || err.message);
+  const status = err.status || 500;
+  res.status(status).json({
+    success: false,
+    message: status === 500 ? 'An internal server error occurred' : err.message
+  });
+});
+
 
 // ---------------------------------------------------------------------------
 // Startup sequence

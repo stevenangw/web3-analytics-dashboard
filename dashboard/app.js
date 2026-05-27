@@ -8,14 +8,7 @@
  */
 
 // ── Configuration ──────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://gqlgcunzwpzanfkgjlkp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbGdjdW56d3B6YW5ma2dqbGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjgxOTUsImV4cCI6MjA5NTA0NDE5NX0.bEc9Fio5Lf4z2Y_tolbes7FW_OcsK1oclfzSjhEYsbs';
-
-const SUPABASE_HEADERS = {
-  'apikey': SUPABASE_ANON_KEY,
-  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-  'Content-Type': 'application/json'
-};
+// ── Configuration ──────────────────────────────────────────────────────────
 const PAGE_SIZE = 15;
 const AUTO_REFRESH_MS = 30000; // 30 seconds
 
@@ -96,6 +89,21 @@ function formatRecencyDays(days) {
   return `${Math.floor(days)} days ago`;
 }
 
+/**
+ * Format date string to YYYY-MM-DD HH:mm for readable display
+ */
+function formatReadableDate(dateString) {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '—';
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
+
 function formatTime(isoString) {
   if (!isoString) return '—';
   const date = new Date(isoString);
@@ -110,10 +118,7 @@ function formatTime(isoString) {
   const days = Math.floor(diffMin / 1440);
   if (days < 30) return formatRecencyDays(days);
   
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
-  });
+  return formatReadableDate(isoString);
 }
 
 /**
@@ -140,18 +145,20 @@ function showToast(message) {
 }
 
 /**
- * Supabase REST Fetcher
+ * REST API Fetcher
  */
-async function supabaseFetch(table, params = '') {
+async function apiFetch(endpoint) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
-      headers: SUPABASE_HEADERS
-    });
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocal ? 'http://localhost:3001' : '';
+    const response = await fetch(`${baseUrl}${endpoint}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
+    const json = await response.json();
+    if (json.success) return json.data;
+    throw new Error(json.message || 'API error');
   } catch (err) {
-    console.warn(`[Supabase REST] Failed to fetch from ${table}:`, err.message);
-    return [];
+    console.warn(`[API REST] Failed to fetch from ${endpoint}:`, err.message);
+    return null;
   }
 }
 
@@ -1492,26 +1499,24 @@ async function refreshAll() {
   // Show skeleton loading state on KPI values
   document.querySelectorAll('.kpi-value').forEach(el => el.classList.add('skeleton'));
 
-  // 1. Fetch raw datasets directly from Supabase Cloud
-  cachedTransfers = await supabaseFetch('token_transfers', '?select=*&order=block_number.desc,id.desc&limit=1000');
-  cachedActivities = await supabaseFetch('user_activities', '?select=*&order=block_number.desc,id.desc&limit=1000');
+  // 1. Fetch raw datasets from backend API securely
+  const transfersRes = await apiFetch('/api/transfers?limit=1000');
+  const activitiesRes = await apiFetch('/api/activities?limit=1000');
+  const statsRes = await apiFetch('/api/stats');
+  const rfmRes = await apiFetch('/api/rfm');
+  const holdersRes = await apiFetch('/api/holders');
+
+  cachedTransfers = transfersRes ? transfersRes.transfers : [];
+  cachedActivities = activitiesRes ? activitiesRes.activities : [];
 
   // 2. Fetch Health state
   await fetchHealth();
 
-  // 3. Compute stats and render KPIs
-  const totalTransfers = cachedTransfers.length;
-  const totalActivities = cachedActivities.length;
-  const uniqueWallets = new Set(cachedActivities.map(a => a.wallet_address)).size;
-  const latestBlock = cachedTransfers.length > 0 ? Math.max(...cachedTransfers.map(t => parseInt(t.block_number))) : 0;
-
-  state.stats = {
-    totalTransfers,
-    totalActivities,
-    uniqueWallets,
-    latestBlock
-  };
-  renderKPIs();
+  // 3. Render KPIs
+  if (statsRes) {
+    state.stats = statsRes;
+    renderKPIs();
+  }
 
   // 4. Render transfers page
   const transfersPage = state.transfers.page;
@@ -1532,18 +1537,20 @@ async function refreshAll() {
   state.activities.data = cachedGroupedActivities.slice(activitiesOffset, activitiesOffset + PAGE_SIZE);
   renderActivitiesTable();
 
-  // 6. Compute RFM, Whales, and render
-  const rfmResult = calculateRFM(cachedActivities);
-  state.rfm.allData = rfmResult.wallets;
-  state.rfm.segments = rfmResult.segments;
-  state.rfm.page = state.rfm.page || 1;
-  const rfmOffset = (state.rfm.page - 1) * PAGE_SIZE;
-  state.rfm.data = state.rfm.allData.slice(rfmOffset, rfmOffset + PAGE_SIZE);
-  renderRFMView();
+  // 6. Set RFM & Holders from API (prevents client-side performance lag!)
+  if (rfmRes) {
+    state.rfm.allData = rfmRes.wallets || [];
+    state.rfm.segments = rfmRes.segments || {};
+    state.rfm.page = state.rfm.page || 1;
+    const rfmOffset = (state.rfm.page - 1) * PAGE_SIZE;
+    state.rfm.data = state.rfm.allData.slice(rfmOffset, rfmOffset + PAGE_SIZE);
+    renderRFMView();
+  }
 
-  // Compute and render Whale Concentration
-  calculateHolders();
-  renderWhalesTable();
+  if (holdersRes) {
+    state.holders = holdersRes || [];
+    renderWhalesTable();
+  }
 
   // 7. Render charts
   if (cachedTransfers.length > 0) {
