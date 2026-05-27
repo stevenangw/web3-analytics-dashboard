@@ -612,7 +612,10 @@ function renderKPIs() {
   document.getElementById('totalActivities').textContent = formatNumber(s.totalActivities);
   document.getElementById('uniqueWallets').textContent = formatNumber(s.uniqueWallets);
   document.getElementById('latestBlock').textContent = s.latestBlock ? `#${formatNumber(s.latestBlock)}` : '—';
-  document.getElementById('latestBlockValue').textContent = s.latestBlock ? `#${formatNumber(s.latestBlock)}` : '#—';
+  const latestBlockValueEl = document.getElementById('latestBlockValue');
+  if (latestBlockValueEl) {
+    latestBlockValueEl.textContent = s.latestBlock ? `#${formatNumber(s.latestBlock)}` : '#—';
+  }
 
   // Dynamic non-hardcoded Trend Calculations from cached data
   let transfersTrendPct = 12; // default dynamic baselines
@@ -705,14 +708,14 @@ function renderStatus() {
       pulse.classList.add('anim-pulse');
     }
     if (text) {
-      text.textContent = '● Live';
+      text.textContent = 'Live';
     }
     if (mPulse) {
       mPulse.classList.remove('offline');
       mPulse.classList.add('anim-pulse');
     }
     if (mText) {
-      mText.textContent = '● Live';
+      mText.textContent = 'Live';
     }
 
     if (badge) {
