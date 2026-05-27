@@ -33,6 +33,19 @@
   --radial-bg: rgba(88, 126, 106, 0.08);
   --skeleton-highlight: rgba(255, 255, 255, 0.05);
 
+  /* Glassmorphism Variables */
+  --glass-bg-light: rgba(255, 255, 255, 0.7);
+  --glass-border-light: rgba(226, 232, 240, 0.8);
+  --glass-shadow-light: rgba(148, 163, 184, 0.05);
+
+  --glass-bg-dark: rgba(15, 23, 42, 0.7);
+  --glass-border-dark: rgba(51, 65, 85, 0.5);
+  --glass-shadow-dark: rgba(0, 0, 0, 0.2);
+
+  --glass-bg: var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-shadow: var(--glass-shadow-dark);
+
   /* 10% Accent System: Premium Sophisticated Sage Green (30% saturation, 49% HSB) */
   --accent-sage: #587E6A;
   --accent: var(--accent-sage);
@@ -55,6 +68,24 @@
   --border-radius-sm: 8px;
   --border-radius-lg: 12px;
 
+  /* Fluid Typography Scale — auto-scales between 360px and 1440px viewport */
+  --fs-body: clamp(13px, 1.2vw + 6px, 16px);
+  --fs-kpi-value: clamp(22px, 2.2vw + 8px, 32px);
+  --fs-kpi-label: clamp(9px, 0.6vw + 4px, 11px);
+  --fs-kpi-trend: clamp(10px, 0.5vw + 5px, 12px);
+  --fs-view-title: clamp(1.25rem, 1.6vw + 0.5rem, 2.2rem);
+  --fs-table-th: clamp(10px, 0.5vw + 5px, 11px);
+  --fs-table-td: clamp(12px, 0.6vw + 6px, 14px);
+  --fs-chart-title: clamp(16px, 1vw + 8px, 20px);
+  --fs-address: clamp(10px, 0.5vw + 5px, 13px);
+  --fs-small: clamp(10px, 0.5vw + 5px, 12px);
+
+  /* Fluid Spacing Scale */
+  --sp-content: clamp(12px, 2vw + 4px, 32px);
+  --sp-card: clamp(14px, 1.5vw + 4px, 24px);
+  --sp-table-cell: clamp(8px, 1vw + 4px, 24px);
+  --sp-gap: clamp(12px, 1.5vw + 4px, 32px);
+
   accent-color: var(--accent);
 }
 
@@ -66,6 +97,9 @@
   --muted: var(--muted-light);
   --radial-bg: rgba(88, 126, 106, 0.03);
   --skeleton-highlight: rgba(0, 0, 0, 0.05);
+  --glass-bg: var(--glass-bg-light);
+  --glass-border: var(--glass-border-light);
+  --glass-shadow: var(--glass-shadow-light);
 }
 
 :root[data-color-scheme="dark"] {
@@ -76,6 +110,9 @@
   --muted: var(--muted-dark);
   --radial-bg: rgba(88, 126, 106, 0.08);
   --skeleton-highlight: rgba(255, 255, 255, 0.05);
+  --glass-bg: var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-shadow: var(--glass-shadow-dark);
 }
 
 /* ── Reset & Core Styles ──────────────────────────────────────────────────── */
@@ -92,7 +129,7 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   line-height: 1.5;
-  font-size: 16px; /* Avoid iOS native zoom */
+  font-size: var(--fs-body);
   -webkit-font-smoothing: antialiased;
   background-image: radial-gradient(circle at 80% 20%, var(--radial-bg), transparent 50%);
   background-attachment: fixed;
@@ -480,7 +517,7 @@ body {
 
 .view-title {
   font-family: var(--font-display);
-  font-size: 2.2rem;
+  font-size: var(--fs-view-title);
   font-weight: 800;
   letter-spacing: -0.04em;
   text-transform: capitalize;
@@ -538,11 +575,11 @@ body {
 
 /* ── Content Body & Tab Panels ───────────────────────────────────────────── */
 .content-body {
-  padding: 32px;
+  padding: var(--sp-content);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--sp-gap);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -569,7 +606,7 @@ body {
 }
 
 .kpi-card {
-  padding: 24px;
+  padding: var(--sp-card);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -607,7 +644,7 @@ body {
 }
 
 .kpi-label {
-  font-size: 11px;
+  font-size: var(--fs-kpi-label);
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
@@ -616,14 +653,14 @@ body {
 
 .kpi-value {
   font-family: var(--font-mono);
-  font-size: 32px;
+  font-size: var(--fs-kpi-value);
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.04em;
 }
 
 .kpi-trend {
-  font-size: 12px;
+  font-size: var(--fs-kpi-trend);
   color: var(--muted);
   font-weight: 500;
 }
@@ -779,7 +816,7 @@ body {
 
 .table-toolbar h3 {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--fs-chart-title);
   font-weight: 700;
 }
 
@@ -803,18 +840,18 @@ table {
 
 th {
   background-color: rgba(255, 255, 255, 0.02);
-  font-size: 11px;
+  font-size: var(--fs-table-th);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
-  padding: 16px 24px;
+  padding: var(--sp-table-cell);
   border-bottom: 1px solid var(--glass-border);
 }
 
 td {
-  font-size: 14px;
-  padding: 16px 24px;
+  font-size: var(--fs-table-td);
+  padding: var(--sp-table-cell);
   border-bottom: 1px solid var(--glass-border);
   color: var(--text);
   font-family: var(--font-sans);
@@ -838,13 +875,14 @@ tr:hover td {
 
 .pagination-indicator {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--fs-small);
   color: var(--muted);
 }
 
 /* ── Web3 Addresses & Hashes Formatting ─────────────────────────────────── */
 .address-pill {
   font-family: var(--font-mono);
+  font-size: var(--fs-address);
   color: var(--accent-cyan);
   font-weight: 500;
   cursor: pointer;
@@ -1569,11 +1607,9 @@ tr:hover td {
     display: none;
   }
 
-  /* 4-column Mobile-first Grid Spacing & Gutters */
+  /* 4-column Mobile-first Grid Spacing & Gutters — fluid via clamp() tokens */
   .content-body {
-    padding: 16px;
     padding-bottom: 80px; /* Safe padding above bottom navigation */
-    gap: 16px;
   }
 
   .top-navbar {
@@ -1583,32 +1619,16 @@ tr:hover td {
     border-bottom: 1px solid var(--border);
   }
 
-  /* Typography constraints */
+  /* Typography — all auto-scaled by fluid tokens, only override what must change */
   .view-title {
-    font-size: 24px !important; /* Strict Typographic scale: H1 at 24px bold */
     line-height: 1.2;
     background: none;
     -webkit-text-fill-color: initial;
     color: var(--text);
   }
 
-  p, span {
-    font-size: 13px !important;
-    line-height: 1.4 !important;
-  }
-
-  td, th {
-    font-size: 11px !important;
-    padding: 6px 4px !important;
-    white-space: nowrap !important;
-    font-family: var(--font-mono) !important;
-  }
-
   .address-pill {
-    font-size: 10px !important;
-    padding: 1px 4px !important;
-    white-space: nowrap !important;
-    font-family: var(--font-mono) !important;
+    white-space: nowrap;
   }
 
   /* Contained, responsive chart box dimensions */
@@ -1643,16 +1663,11 @@ tr:hover td {
   }
 
   .kpi-card {
-    padding: 16px;
     border-radius: 12px;
   }
 
   .kpi-card::before {
     display: none;
-  }
-
-  .kpi-value {
-    font-size: 24px; /* Scaled down for mobile cards */
   }
 
   .charts-layout {
@@ -1693,22 +1708,9 @@ tr:hover td {
 }
 
 @media (max-width: 480px) {
-  .view-title {
-    font-size: 13px;
-  }
-
-  .kpi-value {
-    font-size: 20px;
-  }
-
   .chart-box-header {
     flex-direction: column;
     gap: 8px;
-  }
-
-  td, th {
-    padding: 8px 10px;
-    font-size: 10px;
   }
 }
 
@@ -1813,12 +1815,12 @@ button:focus-visible {
 
 /* Compact Whales Table Style */
 .whale-table th {
-  padding: 8px 6px !important;
+  padding: var(--sp-table-cell) !important;
 }
 
 .whale-table td {
-  padding: 8px 6px !important;
-  font-size: 11px !important;
+  padding: var(--sp-table-cell) !important;
+  font-size: var(--fs-table-td) !important;
 }
 
 /* ── Ingest Data Button Left Sidebar ────────────────────────────────────── */
@@ -1891,7 +1893,7 @@ button:focus-visible {
   /* Make sure the main content has padding at the bottom so bottom nav doesn't cover it */
   .main-container {
     margin-left: 0 !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 64px !important; /* Perfect height of fixed bottom navigation */
   }
 
   /* Mobile Top Header */
@@ -1926,8 +1928,15 @@ button:focus-visible {
   /* Hide desktop header details on mobile top-navbar */
   .top-navbar {
     padding: 12px 16px !important;
-    background-color: transparent !important;
-    border-bottom: none !important;
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .app-footer {
+    justify-content: center !important;
+    padding: 0 16px !important;
+    background-color: var(--surface) !important;
+    border-top: 1px solid var(--border) !important;
   }
 
   .top-navbar .nav-left {
@@ -1935,18 +1944,15 @@ button:focus-visible {
   }
 
   .top-navbar .view-title {
-    font-size: 20px !important;
     font-weight: 700 !important;
   }
 
-  /* Fix KPI card label/trend typography scale overrides */
+  /* KPI typography — color overrides only, size handled by fluid tokens */
   .kpi-label {
-    font-size: 9px !important;
     color: var(--muted) !important;
   }
 
   .kpi-trend {
-    font-size: 11px !important;
     color: var(--muted) !important;
   }
 
@@ -1976,7 +1982,7 @@ button:focus-visible {
   }
 
   td, th {
-    word-break: break-all !important;
+    white-space: nowrap !important;
   }
 
   /* Hide block/time in transfers table on mobile to fit screen */
@@ -2026,7 +2032,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(1) {
     display: block !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     color: var(--text) !important;
     padding: 0 0 6px 0 !important;
@@ -2045,7 +2051,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(3) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2055,7 +2061,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(4) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2068,7 +2074,7 @@ button:focus-visible {
 
   #rfmTableBody td:nth-child(5) {
     display: inline-block !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     color: var(--muted) !important;
     padding: 0 !important;
     border: none !important;
@@ -2084,7 +2090,7 @@ button:focus-visible {
     position: absolute !important;
     right: 16px !important;
     top: 16px !important;
-    font-size: 20px !important;
+    font-size: 16px !important;
     font-weight: 800 !important;
     color: var(--accent) !important;
     padding: 0 !important;
@@ -2155,17 +2161,4 @@ button:focus-visible {
   font-weight: 700;
 }
 
-/* ── Disable all drop shadows for a flat, modern, crisp tactical aesthetic ── */
-.sidebar,
-.kpi-card,
-.kpi-card:hover,
-.chart-box,
-.chart-box:hover,
-.transfers-card,
-.recent-transfers-card,
-.wallet-drawer,
-.btn-primary,
-.timeframe-btn.active,
-.search-box:focus-within {
-  box-shadow: none !important;
-}
+/* ── Drop shadows fully re-enabled as requested by the user ── */
