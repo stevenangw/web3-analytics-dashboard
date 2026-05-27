@@ -33,6 +33,19 @@
   --radial-bg: rgba(88, 126, 106, 0.08);
   --skeleton-highlight: rgba(255, 255, 255, 0.05);
 
+  /* Glassmorphism Variables */
+  --glass-bg-light: rgba(255, 255, 255, 0.7);
+  --glass-border-light: rgba(226, 232, 240, 0.8);
+  --glass-shadow-light: rgba(148, 163, 184, 0.05);
+
+  --glass-bg-dark: rgba(15, 23, 42, 0.7);
+  --glass-border-dark: rgba(51, 65, 85, 0.5);
+  --glass-shadow-dark: rgba(0, 0, 0, 0.2);
+
+  --glass-bg: var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-shadow: var(--glass-shadow-dark);
+
   /* 10% Accent System: Premium Sophisticated Sage Green (30% saturation, 49% HSB) */
   --accent-sage: #587E6A;
   --accent: var(--accent-sage);
@@ -66,6 +79,9 @@
   --muted: var(--muted-light);
   --radial-bg: rgba(88, 126, 106, 0.03);
   --skeleton-highlight: rgba(0, 0, 0, 0.05);
+  --glass-bg: var(--glass-bg-light);
+  --glass-border: var(--glass-border-light);
+  --glass-shadow: var(--glass-shadow-light);
 }
 
 :root[data-color-scheme="dark"] {
@@ -76,6 +92,9 @@
   --muted: var(--muted-dark);
   --radial-bg: rgba(88, 126, 106, 0.08);
   --skeleton-highlight: rgba(255, 255, 255, 0.05);
+  --glass-bg: var(--glass-bg-dark);
+  --glass-border: var(--glass-border-dark);
+  --glass-shadow: var(--glass-shadow-dark);
 }
 
 /* ── Reset & Core Styles ──────────────────────────────────────────────────── */
@@ -1592,14 +1611,14 @@ tr:hover td {
     color: var(--text);
   }
 
-  p, span {
+  p {
     font-size: 13px !important;
     line-height: 1.4 !important;
   }
 
   td, th {
-    font-size: 11px !important;
-    padding: 6px 4px !important;
+    font-size: 12px !important;
+    padding: 10px 8px !important;
     white-space: nowrap !important;
     font-family: var(--font-mono) !important;
   }
@@ -1891,7 +1910,7 @@ button:focus-visible {
   /* Make sure the main content has padding at the bottom so bottom nav doesn't cover it */
   .main-container {
     margin-left: 0 !important;
-    padding-bottom: 80px !important;
+    padding-bottom: 64px !important; /* Perfect height of fixed bottom navigation */
   }
 
   /* Mobile Top Header */
@@ -1926,8 +1945,15 @@ button:focus-visible {
   /* Hide desktop header details on mobile top-navbar */
   .top-navbar {
     padding: 12px 16px !important;
-    background-color: transparent !important;
-    border-bottom: none !important;
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  .app-footer {
+    justify-content: center !important;
+    padding: 0 16px !important;
+    background-color: var(--surface) !important;
+    border-top: 1px solid var(--border) !important;
   }
 
   .top-navbar .nav-left {
@@ -2155,17 +2181,4 @@ button:focus-visible {
   font-weight: 700;
 }
 
-/* ── Disable all drop shadows for a flat, modern, crisp tactical aesthetic ── */
-.sidebar,
-.kpi-card,
-.kpi-card:hover,
-.chart-box,
-.chart-box:hover,
-.transfers-card,
-.recent-transfers-card,
-.wallet-drawer,
-.btn-primary,
-.timeframe-btn.active,
-.search-box:focus-within {
-  box-shadow: none !important;
-}
+/* ── Drop shadows fully re-enabled as requested by the user ── */
