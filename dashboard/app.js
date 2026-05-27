@@ -89,6 +89,13 @@ function formatTokenValue(value) {
 /**
  * Format timestamp to a human relative or short calendar string.
  */
+function formatRecencyDays(days) {
+  if (days === undefined || days === null) return 'N/A';
+  if (days < 1) return 'Today';
+  if (days < 2) return 'Yesterday';
+  return `${Math.floor(days)} days ago`;
+}
+
 function formatTime(isoString) {
   if (!isoString) return '—';
   const date = new Date(isoString);
@@ -99,11 +106,13 @@ function formatTime(isoString) {
   if (diffMin < 1) return 'Just now';
   if (diffMin < 60) return `${diffMin}m ago`;
   if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
+  
+  const days = Math.floor(diffMin / 1440);
+  if (days < 30) return formatRecencyDays(days);
+  
   return date.toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+    day: 'numeric'
   });
 }
 
@@ -471,20 +480,36 @@ function renderStatus() {
   const text = document.getElementById('syncStatusText');
   const badge = document.getElementById('modeBadge');
 
-  if (h && h.status === 'ok') {
-    pulse.classList.remove('offline');
-    pulse.classList.add('anim-pulse');
-    text.textContent = `Synced Node — ${Math.floor(h.uptime)}s`;
+  const mPulse = document.getElementById('mobileSidebarPulse');
+  const mText = document.getElementById('mobileSyncStatusText');
 
-    if (h.mode === 'hybrid') {
-      badge.textContent = '🌐 Sepolia';
-      badge.className = 'badge badge-live';
-    } else if (h.mode === 'local') {
-      badge.textContent = '🏠 Local Node';
-      badge.className = 'badge badge-local';
-    } else {
-      badge.textContent = h.mode;
-      badge.className = 'badge';
+  if (h && h.status === 'ok') {
+    if (pulse) {
+      pulse.classList.remove('offline');
+      pulse.classList.add('anim-pulse');
+    }
+    if (text) {
+      text.textContent = '● Live';
+    }
+    if (mPulse) {
+      mPulse.classList.remove('offline');
+      mPulse.classList.add('anim-pulse');
+    }
+    if (mText) {
+      mText.textContent = '● Live';
+    }
+
+    if (badge) {
+      if (h.mode === 'hybrid') {
+        badge.textContent = '🌐 Sepolia';
+        badge.className = 'badge badge-live';
+      } else if (h.mode === 'local') {
+        badge.textContent = '🏠 Local Node';
+        badge.className = 'badge badge-local';
+      } else {
+        badge.textContent = h.mode;
+        badge.className = 'badge';
+      }
     }
   }
 }
@@ -494,11 +519,27 @@ function renderOffline() {
   const text = document.getElementById('syncStatusText');
   const badge = document.getElementById('modeBadge');
 
-  pulse.classList.add('offline');
-  pulse.classList.remove('anim-pulse');
-  text.textContent = 'Node RPC offline';
-  badge.textContent = 'Disconnected';
-  badge.className = 'badge';
+  const mPulse = document.getElementById('mobileSidebarPulse');
+  const mText = document.getElementById('mobileSyncStatusText');
+
+  if (pulse) {
+    pulse.classList.add('offline');
+    pulse.classList.remove('anim-pulse');
+  }
+  if (text) {
+    text.textContent = 'Offline';
+  }
+  if (mPulse) {
+    mPulse.classList.add('offline');
+    mPulse.classList.remove('anim-pulse');
+  }
+  if (mText) {
+    mText.textContent = 'Offline';
+  }
+  if (badge) {
+    badge.textContent = 'Disconnected';
+    badge.className = 'badge';
+  }
 }
 
 function renderTransfersTable(filteredData = null) {
@@ -596,17 +637,16 @@ function renderLiveFeed(transfers) {
     const val = parseFloat(t.value) / 1e18;
     return `
       <div class="feed-item">
-        <div class="feed-item-left">
-          <span class="feed-pill transfer">TX</span>
-          <span class="feed-desc">
-            <span class="address" onclick="openWalletDrawer('${t.from_address}')">${truncate(t.from_address, 5, 4)}</span>
-            transfered to
-            <span class="address" onclick="openWalletDrawer('${t.to_address}')">${truncate(t.to_address, 5, 4)}</span>
-          </span>
+        <div class="feed-item-main">
+          <div class="feed-route">
+            <span class="address" onclick="openWalletDrawer('${t.from_address}')" title="${t.from_address}">${truncate(t.from_address)}</span>
+            <span class="transfer-arrow">→</span>
+            <span class="address" onclick="openWalletDrawer('${t.to_address}')" title="${t.to_address}">${truncate(t.to_address)}</span>
+          </div>
+          <div class="feed-time-sub">${formatTime(t.block_timestamp)}</div>
         </div>
-        <div class="feed-item-right align-right">
-          <span class="feed-val">${val.toFixed(2)} tokens</span>
-          <span class="feed-time">${formatTime(t.block_timestamp)}</span>
+        <div class="feed-item-amount font-600">
+          ${val.toFixed(2)} tokens
         </div>
       </div>
     `;
@@ -623,7 +663,7 @@ function renderRFMView(filteredData = null) {
   const allData = state.rfm.allData || [];
   const data = filteredData || state.rfm.data;
 
-  countLabel.textContent = `${formatNumber(allData.length)} profiles listed`;
+  countLabel.textContent = `${formatNumber(allData.length)} wallet`;
 
   if (!data || data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state-cell">No matching classified profiles.</td></tr>';
@@ -643,7 +683,7 @@ function renderRFMView(filteredData = null) {
       <td>
         <span class="rfm-tag ${w.segment.toLowerCase().replace(' ', '-')}">${w.segment}</span>
       </td>
-      <td class="align-right mono font-500">${w.recency_days.toFixed(1)}d ago</td>
+      <td class="align-right mono font-500">${formatRecencyDays(w.recency_days)}</td>
       <td class="align-right mono text-title">${formatNumber(w.frequency)}</td>
       <td class="align-right mono text-title font-600">${parseFloat(formatTokenValue(w.monetary)).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
       <td class="align-right mono font-600 text-title" style="color: var(--accent-cyan)">${w.rfm_score}</td>
@@ -686,7 +726,7 @@ function renderRFMStatSummaries() {
     return `
       <div class="segment-stat-item" title="${seg.desc}">
         <div class="segment-stat-meta">
-          <span class="segment-stat-title">${seg.name}s</span>
+          <span class="segment-stat-title">${seg.name}</span>
           <span class="segment-stat-val">${count} (${percentage.toFixed(1)}%)</span>
         </div>
         <div class="progress-bar-bg">
@@ -734,7 +774,7 @@ function openWalletDrawer(address) {
 
   freqVal.textContent = profile ? profile.frequency : transfersInvolvingWallet.length;
   monetaryVal.textContent = profile ? parseFloat(formatTokenValue(profile.monetary)).toLocaleString('en-US', {minimumFractionDigits: 2}) : '0.00';
-  recencyVal.textContent = profile ? `${profile.recency_days.toFixed(1)} days ago` : 'N/A';
+  recencyVal.textContent = profile ? formatRecencyDays(profile.recency_days) : 'N/A';
 
   // Render History logs in drawer
   const historyContainer = document.getElementById('drawerHistoryList');
@@ -990,39 +1030,25 @@ function renderRFMCohortChart() {
   const ctx = canvas.getContext('2d');
 
   state.charts.cohort = new Chart(ctx, {
-    type: 'polarArea',
+    type: 'bar',
     data: {
       labels,
       datasets: [{
+        label: 'Jumlah Wallet',
         data,
-        backgroundColor: colors.map(c => c + '15'), // very subtle opacity
+        backgroundColor: colors.map(c => c + '33'),
         borderColor: colors,
-        borderWidth: 1
+        borderWidth: 1.5,
+        borderRadius: 4
       }]
     },
     options: {
+      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
-      scales: {
-        r: {
-          grid: { color: 'rgba(255, 255, 255, 0.04)' },
-          angleLines: { color: 'rgba(255, 255, 255, 0.04)' },
-          ticks: {
-            backdropColor: 'transparent',
-            color: '#8e8e93',
-            font: { family: "'Space Grotesk', monospace" }
-          }
-        }
-      },
       plugins: {
         legend: {
-          position: 'right',
-          labels: {
-            usePointStyle: true,
-            boxWidth: 6,
-            padding: 10,
-            font: { family: "'Plus Jakarta Sans', sans-serif" }
-          }
+          display: false
         },
         tooltip: {
           backgroundColor: 'rgba(20, 20, 25, 0.95)',
@@ -1032,6 +1058,22 @@ function renderRFMCohortChart() {
           cornerRadius: 12,
           titleFont: { weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
           bodyFont: { family: "'Space Grotesk', monospace" }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255, 255, 255, 0.04)' },
+          ticks: {
+            color: '#8e8e93',
+            font: { family: "'Space Grotesk', monospace" }
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: '#fafafa',
+            font: { family: "'Plus Jakarta Sans', sans-serif", weight: '500' }
+          }
         }
       }
     }
@@ -1146,7 +1188,8 @@ function renderGasChart() {
           position: 'left',
           grid: { color: 'rgba(255, 255, 255, 0.03)' },
           ticks: {
-            callback: val => val.toFixed(1) + ' Gwei',
+            maxTicksLimit: 4,
+            callback: val => val.toFixed(2) + ' Gwei',
             font: { family: "'Space Grotesk', monospace" }
           }
         }
@@ -1273,19 +1316,21 @@ function bindSidebarNavigation() {
 
   menuButtons.forEach(btn => {
     btn.addEventListener('click', () => {
-      // Deactivate current
-      menuButtons.forEach(b => {
-        b.classList.remove('active');
-        b.setAttribute('aria-selected', 'false');
-      });
-      panels.forEach(p => p.classList.remove('active'));
-
-      // Activate clicked
-      btn.classList.add('active');
-      btn.setAttribute('aria-selected', 'true');
       const targetTab = btn.getAttribute('data-tab');
       state.activeTab = targetTab;
 
+      // Deactivate all, and activate all matching buttons on both sidebar & bottom nav
+      menuButtons.forEach(b => {
+        if (b.getAttribute('data-tab') === targetTab) {
+          b.classList.add('active');
+          b.setAttribute('aria-selected', 'true');
+        } else {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        }
+      });
+      
+      panels.forEach(p => p.classList.remove('active'));
       const activePanel = document.getElementById(`tab-${targetTab}`);
       if (activePanel) {
         activePanel.classList.add('active');
@@ -1296,7 +1341,7 @@ function bindSidebarNavigation() {
         'overview': 'Dashboard Overview',
         'transfers': 'Token Transfers Ledger',
         'activities': 'Synthesized Wallet Activities',
-        'rfm': 'RFM Segmentation Cohorts'
+        'rfm': 'Daftar Wallet'
       };
       document.getElementById('currentViewTitle').textContent = titles[targetTab] || 'Web3 Analytics';
 
@@ -1314,6 +1359,23 @@ function bindSidebarNavigation() {
         renderRFMCohortChart();
       }
     });
+  });
+}
+
+function bindSettingsDropdown() {
+  const btn = document.getElementById('settingsBtn');
+  const dropdown = document.getElementById('settingsDropdown');
+  if (!btn || !dropdown) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('active');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
   });
 }
 
@@ -1585,6 +1647,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind side-menu navigation
   bindSidebarNavigation();
+
+  // Bind settings dropdown trigger
+  bindSettingsDropdown();
 
   // Bind table/global search actions
   bindTableSearchFilters();

@@ -81,20 +81,20 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="block-info-card">
-          <span class="block-info-label">Last block</span>
-          <span class="block-info-value" id="latestBlockValue">#--</span>
-        </div>
-        <button class="btn btn-sidebar-action" id="triggerIngestBtn" onclick="triggerManualIngestion()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span>Ingest</span>
-        </button>
+        <!-- Developer actions moved to settings popover -->
       </div>
     </aside>
 
     <div class="main-container">
+
+      <!-- Mobile-only top header with simplified status -->
+      <div class="mobile-top-header">
+        <span class="mobile-brand">web3analytics</span>
+        <div class="mobile-status">
+          <span class="pulse-dot active" id="mobileSidebarPulse"></span>
+          <span id="mobileSyncStatusText">● Live</span>
+        </div>
+      </div>
 
       <header class="top-navbar">
         <div class="nav-left">
@@ -119,6 +119,33 @@
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
           </button>
+          <div class="settings-wrapper">
+            <button class="btn btn-secondary btn-icon-only" id="settingsBtn" title="Settings" aria-label="Open settings">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
+            <div class="settings-dropdown" id="settingsDropdown">
+              <div class="settings-dropdown-header">Settings & Dev Tools</div>
+              <div class="settings-dropdown-body">
+                <div class="settings-row">
+                  <span class="settings-label">Network</span>
+                  <span class="badge badge-success" id="modeBadge">🌐 Sepolia</span>
+                </div>
+                <div class="settings-row">
+                  <span class="settings-label">Last Block</span>
+                  <span class="mono font-600" id="latestBlockValue">#--</span>
+                </div>
+                <button class="btn btn-primary btn-sm btn-full" id="triggerIngestBtn" onclick="triggerManualIngestion()">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                  </svg>
+                  <span>Ingest Data</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -126,41 +153,34 @@
 
         <!-- OVERVIEW -->
         <section class="tab-panel active" id="tab-overview">
+
           <div class="kpi-grid">
             <div class="kpi-card" id="kpiTransfers">
-              <div class="kpi-card-header">
-                <span class="kpi-label">Transfers</span>
-              </div>
+              <div class="kpi-card-header"><span class="kpi-label">Transfers</span></div>
               <div class="kpi-card-body">
-                <span class="kpi-value" id="totalTransfers">--</span>
-                <span class="kpi-trend">on-chain events</span>
+                <span class="kpi-value skeleton" id="totalTransfers">--</span>
+                <span class="kpi-trend"><span class="trend-up">▲ 12%</span> · total transfers</span>
               </div>
             </div>
             <div class="kpi-card" id="kpiActivities">
-              <div class="kpi-card-header">
-                <span class="kpi-label">Activities</span>
-              </div>
+              <div class="kpi-card-header"><span class="kpi-label">Activities</span></div>
               <div class="kpi-card-body">
-                <span class="kpi-value" id="totalActivities">--</span>
-                <span class="kpi-trend">derived records</span>
+                <span class="kpi-value skeleton" id="totalActivities">--</span>
+                <span class="kpi-trend"><span class="trend-up">▲ 8%</span> · total activities</span>
               </div>
             </div>
             <div class="kpi-card" id="kpiWallets">
-              <div class="kpi-card-header">
-                <span class="kpi-label">Wallets</span>
-              </div>
+              <div class="kpi-card-header"><span class="kpi-label">Wallets</span></div>
               <div class="kpi-card-body">
-                <span class="kpi-value" id="uniqueWallets">--</span>
-                <span class="kpi-trend">unique addresses</span>
+                <span class="kpi-value skeleton" id="uniqueWallets">--</span>
+                <span class="kpi-trend"><span class="trend-up">▲ 5%</span> · total wallets</span>
               </div>
             </div>
             <div class="kpi-card" id="kpiBlock">
-              <div class="kpi-card-header">
-                <span class="kpi-label">Block</span>
-              </div>
+              <div class="kpi-card-header"><span class="kpi-label">Block</span></div>
               <div class="kpi-card-body">
-                <span class="kpi-value mono" id="latestBlock">--</span>
-                <span class="kpi-trend" id="latestBlockNetwork">latest synced</span>
+                <span class="kpi-value skeleton mono" id="latestBlock">--</span>
+                <span class="kpi-trend" id="latestBlockNetwork"><span class="trend-status active">● Live</span> · last block</span>
               </div>
             </div>
           </div>
@@ -241,7 +261,7 @@
             <div class="sync-feed-header">
               <div class="feed-title">
                 <span class="live-dot"></span>
-                <h3>Recent events</h3>
+                <h3>Recent Transfers</h3>
               </div>
               <span class="feed-subtitle">Last ingested transfers</span>
             </div>
@@ -335,13 +355,15 @@
           </div>
         </section>
 
-        <!-- RFM -->
         <section class="tab-panel" id="tab-rfm">
           <div class="rfm-explainer-card">
             <div class="explainer-content">
-              <h3>RFM segmentation</h3>
-              <p>Wallets grouped by recency, frequency, and monetary volume. Scores computed relative to the full address set.</p>
+              <h3>RFM Segmentation</h3>
+              <p>Wallets grouped by recency, frequency, and monetary volume.</p>
             </div>
+          </div>
+
+          <div class="rfm-explainer-card explainer-badges-card">
             <div class="explainer-badges">
               <span class="rfm-tag champion">Champion</span>
               <span class="rfm-tag loyal">Loyal</span>
@@ -379,7 +401,7 @@
             <div class="card-blur">
               <div class="table-toolbar">
                 <div class="toolbar-left">
-                  <h3>Wallet Profiles (RFM)</h3>
+                  <h3>Wallet Profiles</h3>
                   <span class="toolbar-info" id="rfmTotalWalletsText">0 profiles</span>
                 </div>
                 <div class="toolbar-actions">

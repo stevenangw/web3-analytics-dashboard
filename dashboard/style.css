@@ -1736,3 +1736,342 @@ button:focus-visible {
   padding: 8px 6px !important;
   font-size: 11px !important;
 }
+
+/* ── Settings Dropdown Consolidations ────────────────────────────────────── */
+.settings-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-dropdown {
+  position: absolute;
+  top: 120%;
+  right: 0;
+  width: 240px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+  display: none;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+}
+
+.settings-dropdown.active {
+  display: flex;
+}
+
+.settings-dropdown-header {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-dropdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.settings-label {
+  color: var(--muted);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* ── Mobile Viewports Layout Overrides (max-width: 768px) ──────────────── */
+@media (max-width: 768px) {
+  /* Fix sidebar bottom nav position and override top: 0 sticky */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 64px !important;
+    z-index: 1000 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Make sure the main content has padding at the bottom so bottom nav doesn't cover it */
+  .main-container {
+    padding-bottom: 80px !important;
+  }
+
+  /* Mobile Top Header */
+  .mobile-top-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .mobile-brand {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+  }
+
+  .mobile-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* Hide desktop header details on mobile top-navbar */
+  .top-navbar {
+    padding: 12px 16px !important;
+    background-color: transparent !important;
+    border-bottom: none !important;
+  }
+
+  .top-navbar .nav-left {
+    display: block !important;
+  }
+
+  .top-navbar .view-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+  }
+
+  /* Fix KPI card label/trend typography scale overrides */
+  .kpi-label {
+    font-size: 9px !important;
+    color: var(--muted) !important;
+  }
+
+  .kpi-trend {
+    font-size: 11px !important;
+    color: var(--muted) !important;
+  }
+
+  .trend-up {
+    color: #10b981 !important; /* emerald green */
+    font-weight: 600 !important;
+    margin-right: 4px !important;
+  }
+
+  .trend-status.active {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+    margin-right: 4px !important;
+  }
+
+  /* Table Horizontal Scroll containment rules */
+  .table-responsive {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 8px;
+  }
+
+  table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+
+  td, th {
+    word-break: break-all !important;
+  }
+
+  /* Hide block/time in transfers table on mobile to fit screen */
+  #tab-transfers th:nth-child(2),
+  #tab-transfers td:nth-child(2),
+  #tab-transfers th:nth-child(6),
+  #tab-transfers td:nth-child(6) {
+    display: none !important;
+  }
+
+  /* Hide block/hash/time in activity table on mobile to fit screen */
+  #tab-activities th:nth-child(4),
+  #tab-activities td:nth-child(4),
+  #tab-activities th:nth-child(5),
+  #tab-activities td:nth-child(5),
+  #tab-activities th:nth-child(6),
+  #tab-activities td:nth-child(6) {
+    display: none !important;
+  }
+
+  /* Table Wallet Profiles (RFM) Card Layout for Mobile */
+  #tab-rfm table thead {
+    display: none !important;
+  }
+
+  #rfmTableBody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 8px 0 !important;
+  }
+
+  #rfmTableBody tr {
+    display: block !important;
+    position: relative !important;
+    padding: 16px !important;
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    margin-bottom: 0 !important;
+  }
+
+  #rfmTableBody tr:hover {
+    border-color: var(--accent) !important;
+  }
+
+  #rfmTableBody td:nth-child(1) {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    padding: 0 0 6px 0 !important;
+    border: none !important;
+    text-align: left !important;
+    background: none !important;
+  }
+
+  #rfmTableBody td:nth-child(2) {
+    display: inline-block !important;
+    padding: 0 0 12px 0 !important;
+    border: none !important;
+    text-align: left !important;
+    background: none !important;
+  }
+
+  #rfmTableBody td:nth-child(3) {
+    display: inline-block !important;
+    font-size: 12px !important;
+    color: var(--muted) !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+    background: none !important;
+  }
+
+  #rfmTableBody td:nth-child(4) {
+    display: inline-block !important;
+    font-size: 12px !important;
+    color: var(--muted) !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+    background: none !important;
+  }
+  #rfmTableBody td:nth-child(4)::before {
+    content: " · Freq: ";
+  }
+
+  #rfmTableBody td:nth-child(5) {
+    display: inline-block !important;
+    font-size: 12px !important;
+    color: var(--muted) !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+    background: none !important;
+  }
+  #rfmTableBody td:nth-child(5)::before {
+    content: " · Vol: ";
+  }
+
+  #rfmTableBody td:nth-child(6) {
+    display: block !important;
+    position: absolute !important;
+    right: 16px !important;
+    top: 16px !important;
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: var(--accent) !important;
+    padding: 0 !important;
+    border: none !important;
+    text-align: right !important;
+    background: none !important;
+  }
+
+  /* Timeframe selector responsiveness */
+  .timeframe-btn {
+    min-height: 36px !important;
+    min-width: 32px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+  }
+}
+
+/* Base Mobile top header display rule */
+.mobile-top-header {
+  display: none;
+}
+
+/* Recent Events layout style overrides */
+.feed-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: all var(--duration) var(--ease-out);
+}
+
+.feed-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.feed-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.transfer-arrow {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.feed-time-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.feed-item-amount {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 700;
+}
