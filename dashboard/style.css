@@ -138,7 +138,8 @@ body {
   flex-direction: column;
   justify-content: space-between;
   height: 100dvh;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 0;
   z-index: 100;
   transition: width var(--duration) var(--ease-out);
@@ -175,20 +176,22 @@ body {
 .sidebar-toggle-btn {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: none;
+  background: transparent;
   color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all var(--duration) var(--ease-out);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sidebar-toggle-btn:hover {
-  border-color: var(--accent);
+  background: transparent;
+  border: none;
   color: var(--text);
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .sync-status {
@@ -452,6 +455,12 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  margin-left: 260px;
+  transition: margin-left var(--duration) var(--ease-out);
+}
+
+.sidebar.collapsed + .main-container {
+  margin-left: 64px !important;
 }
 
 .top-navbar {
@@ -1414,6 +1423,7 @@ tr:hover td {
   padding: 0 24px;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   border-top: 1px solid var(--border);
   background-color: var(--surface);
   color: var(--muted);
@@ -1839,6 +1849,7 @@ button:focus-visible {
 
   /* Make sure the main content has padding at the bottom so bottom nav doesn't cover it */
   .main-container {
+    margin-left: 0 !important;
     padding-bottom: 80px !important;
   }
 
