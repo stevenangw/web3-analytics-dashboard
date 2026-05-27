@@ -2113,3 +2113,18 @@ button:focus-visible {
   color: var(--accent);
   font-weight: 700;
 }
+
+/* ── Disable all drop shadows for a flat, modern, crisp tactical aesthetic ── */
+.sidebar,
+.kpi-card,
+.kpi-card:hover,
+.chart-box,
+.chart-box:hover,
+.transfers-card,
+.recent-transfers-card,
+.wallet-drawer,
+.btn-primary,
+.timeframe-btn.active,
+.search-box:focus-within {
+  box-shadow: none !important;
+}
